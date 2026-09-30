@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GlitchLab • Sistema de Órdenes y Bitácora de Microelectrónica</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5e9',
+            primary_dark: '#0284c7',
+            secondary: '#0f172a'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Estilos Custom, ECG de glitchlab.mx y Print -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="bg-[#0a0f1d] text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- Top Navigation Bar con el Logo Idéntico a glitchlab.mx -->
+  <header class="bg-[#0f172a]/95 backdrop-blur sticky top-0 z-30 border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand Logo con Pulso Electrocardiograma de glitchlab.mx -->
+      <div class="flex items-center gap-3">
+        <a href="#" class="flex flex-col items-center justify-center select-none w-fit group">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-microchip text-sky-400 text-3xl group-hover:scale-105 transition-transform flex-shrink-0"></i>
+            <span class="font-bold text-2xl tracking-wider whitespace-nowrap text-white">Glitch<span class="text-sky-400">Lab</span></span>
+          </div>
+          <!-- Pulso Electrocardiograma Animado -->
+          <div class="logo-ecg-container">
+            <svg class="logo-ecg-svg" viewBox="0 0 200 20" preserveAspectRatio="none">
+              <path d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="rgba(14, 165, 233, 0.25)" stroke-width="1.3" pathLength="230"></path>
+              <path class="logo-ecg-pulse" d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="230"></path>
+              <circle class="logo-ecg-spark" cx="104" cy="1.5" r="2" fill="#ffffff"></circle>
+            </svg>
+          </div>
+        </a>
+
+        <div class="hidden sm:block pl-3 border-l border-slate-700/80">
+          <span class="text-xs font-bold text-sky-400 uppercase tracking-wider block">Especialistas en Microelectrónica</span>
+          <span class="text-[11px] text-slate-400">Sistema de Órdenes & Bitácora de Laboratorio</span>
+        </div>
+      </div>
+
+      <!-- Quick Search Bar -->
+      <div class="flex-1 max-w-md min-w-[240px]">
+        <div class="relative">
+          <i class="fas fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Buscar por Folio, Cliente, Teléfono, Serie o Marca..." 
+            class="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+          >
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center gap-2">
+        <button 
+          id="btnNewOrder" 
+          class="px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-sky-500/25 transition flex items-center gap-2"
+        >
+          <i class="fas fa-plus"></i>
+          <span>Nueva Orden</span>
+        </button>
+
+        <!-- Dropdown Herramientas / Ajustes -->
+        <div class="relative group">
+          <button class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition" title="Opciones y Respaldos">
+            <i class="fas fa-sliders"></i>
+          </button>
+          
+          <div class="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 hidden group-hover:block hover:block z-40">
+            <button onclick="openShopSettingsModal()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+              <i class="fas fa-store text-sky-400 w-4"></i> Datos del Taller & Políticas
+            </button>
+            <div class="border-t border-slate-800 my-1"></div>
+            <button onclick="exportDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+              <i class="fas fa-download text-emerald-400 w-4"></i> Exportar Copia de Seguridad (JSON)
+            </button>
+            <button onclick="importDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+              <i class="fas fa-upload text-amber-400 w-4"></i> Restaurar Respaldo
+            </button>
+            <input type="file" id="importFileInput" accept=".json" class="hidden">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- KPI Dashboard Metrics -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      
+      <!-- Total Órdenes -->
+      <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+        <div class="h-12 w-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
+          <i class="fas fa-layer-group"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 font-medium">Total de Órdenes</p>
+          <p id="metricTotalOrders" class="text-2xl font-black text-white">0</p>
+        </div>
+      </div>
+
+      <!-- Equipos en Taller -->
+      <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+        <div class="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+          <i class="fas fa-screwdriver-wrench"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 font-medium">En Laboratorio</p>
+          <p id="metricInShop" class="text-2xl font-black text-amber-400">0</p>
+        </div>
+      </div>
+
+      <!-- Listos para Entrega -->
+      <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+        <div class="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+          <i class="fas fa-circle-check"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 font-medium">Listos para Entrega</p>
+          <p id="metricReady" class="text-2xl font-black text-emerald-400">0</p>
+        </div>
+      </div>
+
+      <!-- Saldos por Cobrar -->
+      <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+        <div class="h-12 w-12 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl">
+          <i class="fas fa-hand-holding-dollar"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 font-medium">Saldos Pendientes</p>
+          <p id="metricPendingBalance" class="text-2xl font-black text-sky-400">$0</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Filter Pills Section -->
+    <section class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+      <button class="filter-pill active px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-500 text-white transition flex items-center gap-2 whitespace-nowrap" data-status="all">
+        <i class="fas fa-list"></i> Todos
+        <span id="count-all" class="px-1.5 py-0.2 rounded-full bg-black/30 text-[10px]">0</span>
+      </button>
+
+      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="received">
+        <i class="fas fa-inbox text-blue-400"></i> Recibidos
+        <span id="count-received" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+      </button>
+
+      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="diagnostic">
+        <i class="fas fa-microchip text-amber-400"></i> En Diagnóstico
+        <span id="count-diagnostic" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+      </button>
+
+      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="in_progress">
+        <i class="fas fa-screwdriver-wrench text-sky-400"></i> En Reparación
+        <span id="count-in_progress" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+      </button>
+
+      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="waiting_parts">
+        <i class="fas fa-clock text-orange-400"></i> Espera Repuesto
+        <span id="count-waiting_parts" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+      </button>
+
+      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="ready">
+        <i class="fas fa-circle-check text-emerald-400"></i> Listos
+        <span id="count-ready" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+      </button>
+
+      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="delivered">
+        <i class="fas fa-handshake text-slate-400"></i> Entregados
+        <span id="count-delivered" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+      </button>
+
+      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="cancelled">
+        <i class="fas fa-ban text-red-400"></i> Cancelados
+        <span id="count-cancelled" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+      </button>
+    </section>
+
+    <!-- Orders Cards Grid -->
+    <section id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Se puebla dinámicamente mediante app.js -->
+    </section>
+
+  </main>
+
+  <!-- MODAL: Crear / Editar Orden de Servicio -->
+  <div id="orderModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl my-auto">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50 rounded-t-2xl">
+        <div class="flex items-center gap-3">
+          <div class="h-8 w-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <i class="fas fa-file-invoice text-sm"></i>
+          </div>
+          <div>
+            <h3 id="modalTitle" class="text-base font-bold text-white">Nueva Orden de Servicio</h3>
+            <p class="text-xs text-slate-400">GlitchLab • Laboratorio de Microelectrónica</p>
+          </div>
+        </div>
+        <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="orderForm" class="flex-1 overflow-y-auto p-6 space-y-6">
+        
+        <!-- Bloque 1: Folio, Fecha y Estado -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Folio de Orden</label>
+            <input type="text" id="orderId" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-sky-400 font-mono font-bold focus:outline-none" readonly>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Fecha y Hora de Recepción</label>
+            <input type="datetime-local" id="orderDate" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500" required>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Estado de Ingreso</label>
+            <select id="orderStatusSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-sky-500">
+              <option value="received">📥 Recibido</option>
+              <option value="diagnostic">🔍 En Diagnóstico</option>
+              <option value="in_progress">⚙️ En Reparación</option>
+              <option value="waiting_parts">📦 En Espera de Repuesto</option>
+              <option value="ready">✅ Listo para Entrega</option>
+              <option value="delivered">🤝 Entregado</option>
+              <option value="cancelled">❌ Cancelado</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Bloque 2: Datos del Cliente -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 mb-3 flex items-center gap-2">
+            <i class="fas fa-user"></i> Datos del Cliente
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="lg:col-span-2">
+              <label class="block text-xs font-medium text-slate-300 mb-1">Nombre Completo *</label>
+              <input type="text" id="clientName" placeholder="Ej: Carlos Mendoza" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Teléfono / WhatsApp *</label>
+              <input type="tel" id="clientPhone" placeholder="Ej: 3111234567" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Correo Electrónico</label>
+              <input type="email" id="clientEmail" placeholder="cliente@correo.com" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none">
+            </div>
+            <div class="sm:col-span-2 lg:col-span-4">
+              <label class="block text-xs font-medium text-slate-300 mb-1">Dirección / Notas de Contacto</label>
+              <input type="text" id="clientAddress" placeholder="Colonia, calle o referencia de entrega" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque 3: Datos del Equipo y Seguridad -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 mb-3 flex items-center gap-2">
+            <i class="fas fa-microchip"></i> Datos del Equipo & Seguridad de Acceso
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Tipo de Equipo *</label>
+              <select id="equipmentType" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none">
+                <option value="Laptop">Laptop / Portátil</option>
+                <option value="PC de Escritorio">PC de Escritorio / Gabinete</option>
+                <option value="Tarjeta Madre">Tarjeta Madre / Componente</option>
+                <option value="Consola de Videojuegos">Consola de Videojuegos</option>
+                <option value="Celular / Smartphone">Celular / Smartphone</option>
+                <option value="Tablet">Tablet</option>
+                <option value="Monitor / Pantalla">Monitor / Pantalla</option>
+                <option value="Fuente de Poder">Fuente de Poder / Componente</option>
+                <option value="Impresora">Impresora</option>
+                <option value="Otro">Otro Dispositivo</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Marca *</label>
+              <input type="text" id="equipmentBrand" placeholder="Ej: ASUS, Dell, HP, Apple, Lenovo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Modelo *</label>
+              <input type="text" id="equipmentModel" placeholder="Ej: ROG Strix, ThinkPad, PS5" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">No. Serie / IMEI</label>
+              <input type="text" id="equipmentSerial" placeholder="Número de serie o 'N/A'" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none">
+            </div>
+
+            <!-- Apartado de Contraseña / Acceso -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium text-amber-300 mb-1 flex items-center gap-1.5">
+                <i class="fas fa-shield-halved"></i> Tipo de Seguridad del Equipo
+              </label>
+              <select id="lockType" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-amber-400 focus:outline-none">
+                <option value="password">Contraseña Alfanumérica (Texto)</option>
+                <option value="pin">PIN Numérico</option>
+                <option value="pattern">Patrón Gráfico (Descripción / Trazo)</option>
+                <option value="none">Sin Contraseña / No Aplica</option>
+              </select>
+            </div>
+
+            <div id="passwordFieldContainer" class="sm:col-span-2">
+              <label class="block text-xs font-medium text-amber-300 mb-1 flex items-center justify-between">
+                <span>Contraseña / PIN de Desbloqueo</span>
+                <span class="text-[10px] text-slate-400">Requerido para pruebas funcionales</span>
+              </label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="devicePassword" 
+                  placeholder="Escribe la contraseña o PIN..." 
+                  class="w-full bg-slate-950 border border-amber-500/40 rounded-lg pl-3 pr-10 py-2 text-sm text-amber-300 font-mono font-semibold focus:border-amber-400 focus:outline-none"
+                >
+                <button type="button" id="btnTogglePassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque 4: Checklist de Recepción y Estado Físico -->
+        <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 mb-3 flex items-center gap-2">
+            <i class="fas fa-clipboard-check"></i> Accesorios Dejados & Estado Físico
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs font-semibold text-slate-300 mb-2">Accesorios que acompañan:</p>
+              <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="accessories" value="Cargador original" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Cargador original</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="accessories" value="Cable de poder" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Cable de poder</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="accessories" value="Batería" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Batería</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="accessories" value="Funda / Mochila" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Funda / Mochila</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="accessories" value="Cable HDMI / Video" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Cable HDMI / Video</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="accessories" value="Control / Periférico" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Control / Periférico</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-xs font-semibold text-slate-300 mb-2">Condición Física Previa:</p>
+              <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="condition" value="Rayones leves" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Rayones / Desgaste</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="condition" value="Golpes / Abolladuras" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Golpes / Fisuras</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="condition" value="Pantalla estrellada" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Pantalla estrellada</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="condition" value="Faltan tornillos" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Faltan tornillos</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="condition" value="Rastros de humedad" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>Humedad / Mojado</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="condition" value="No enciende" class="rounded bg-slate-900 border-slate-700 text-sky-500 focus:ring-0">
+                  <span>No enciende / En corto</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="sm:col-span-2 mt-2">
+              <label class="block text-xs font-medium text-slate-400 mb-1">Observaciones adicionales de estética:</label>
+              <input type="text" id="conditionNotes" placeholder="Ej: Bisagra floja, tornillos barridos..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque 5: Falla y Diagnóstico Inicial -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 mb-3 flex items-center gap-2">
+            <i class="fas fa-triangle-exclamation"></i> Falla Reportada & Diagnóstico Preliminar
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Falla Reportada por el Cliente *</label>
+              <textarea id="issueDescription" rows="3" placeholder="Describe lo que el cliente menciona que le pasa al equipo..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Diagnóstico Inicial / Observaciones de Laboratorio</label>
+              <textarea id="initialDiagnosis" rows="3" placeholder="Notas de mediciones iniciales o inspección visual..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200 focus:border-sky-500 focus:outline-none"></textarea>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium text-slate-300 mb-1">Técnico Asignado</label>
+              <input type="text" id="technicianName" value="Ing. Especialista" placeholder="Nombre del técnico responsable" class="w-full sm:w-1/2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque 6: Costos y Anticipo -->
+        <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 mb-3 flex items-center gap-2">
+            <i class="fas fa-coins"></i> Cotización Estimada & Anticipo
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Costo Estimado ($ MXN)</label>
+              <input type="number" id="costEstimated" step="0.01" min="0" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-bold focus:border-sky-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Anticipo Recibido ($ MXN)</label>
+              <input type="number" id="costAdvance" step="0.01" min="0" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-sky-400 font-bold focus:border-sky-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Método de Pago</label>
+              <select id="costPaymentMethod" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia / SPEI</option>
+                <option value="Tarjeta">Tarjeta Débito/Crédito</option>
+                <option value="Por Liquidar">Por Liquidar</option>
+              </select>
+            </div>
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700/80 text-center">
+              <span class="block text-[11px] text-slate-400 uppercase font-semibold">Saldo Restante</span>
+              <span id="costBalanceDisplay" class="text-lg font-black text-amber-400">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque 7: Firma Digital del Cliente -->
+        <div class="border border-slate-800 rounded-xl p-4 bg-slate-950/40">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-2">
+                <i class="fas fa-signature"></i> Firma de Conformidad del Cliente
+              </h4>
+              <p class="text-[11px] text-slate-400">El cliente puede firmar directamente en pantalla con dedo, stylus o mouse.</p>
+            </div>
+            <button type="button" id="btnClearSignature" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg transition flex items-center gap-1.5">
+              <i class="fas fa-eraser"></i> Limpiar Firma
+            </button>
+          </div>
+
+          <div class="border-2 border-dashed border-slate-700 rounded-xl p-1 bg-white overflow-hidden flex items-center justify-center">
+            <canvas id="signatureCanvas" class="w-full h-36 rounded-lg"></canvas>
+          </div>
+
+          <p class="text-[10px] text-slate-400 mt-2 text-justify leading-relaxed">
+            * Al firmar, el cliente declara que la información y estado físico señalados corresponden al equipo entregado y autoriza a <strong>GlitchLab</strong> a realizar los procedimientos de diagnóstico y microelectrónica necesarios.
+          </p>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+          <button type="button" onclick="closeOrderModal()" class="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white text-sm font-bold shadow-lg shadow-sky-500/25 transition flex items-center gap-2">
+            <i class="fas fa-floppy-disk"></i> Guardar Orden
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- MODAL: BITÁCORA TÉCNICA & FOTOS DEL PROCESO (NUEVO) -->
+  <div id="bitacoraModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl max-h-[94vh] flex flex-col shadow-2xl my-auto">
+      
+      <!-- Bitacora Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-2xl">
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white">Bitácora & Evidencia de Reparación</h3>
+              <span id="bitacoraFolioBadge" class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">GL-2026-0000</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              <span id="bitacoraEquipmentHeader" class="text-slate-300 font-medium">Equipo</span> • Cliente: <span id="bitacoraClientHeader" class="text-slate-300">Cliente</span>
+            </p>
+          </div>
+        </div>
+
+        <button onclick="closeBitacoraModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Bitacora Body: Grid con 2 columnas (Fotos a la izquierda / Timeline y Registro a la derecha) -->
+      <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-slate-950/30">
+        
+        <!-- Columna Izquierda: Galería de Fotos y Subida (5 columnas en desktop) -->
+        <div class="lg:col-span-5 space-y-4">
+          
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-camera text-sky-400"></i>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-white">Evidencia Fotográfica</h4>
+              </div>
+              <span id="photoCountBadge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-800 text-sky-300 border border-slate-700">0</span>
+            </div>
+
+            <!-- Botón para subir fotos / tomar con cámara -->
+            <label class="w-full py-3 px-4 border-2 border-dashed border-sky-500/40 hover:border-sky-400 bg-sky-500/5 hover:bg-sky-500/10 rounded-xl cursor-pointer flex flex-col items-center justify-center text-center transition group">
+              <i class="fas fa-cloud-arrow-up text-2xl text-sky-400 group-hover:scale-110 transition mb-1"></i>
+              <span class="text-xs font-bold text-slate-200 group-hover:text-white">Subir Fotos / Tomar con Cámara</span>
+              <span class="text-[10px] text-slate-400 mt-0.5">Captura microscopio, antes, durante y después</span>
+              <input type="file" id="photoFileInput" accept="image/*" multiple class="hidden">
+            </label>
+          </div>
+
+          <!-- Galería Grid de Fotos -->
+          <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4">
+            <h5 class="text-xs font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
+              <i class="fas fa-images text-sky-400 text-[11px]"></i> Fotos Registradas:
+            </h5>
+            <div id="photoGalleryContainer" class="grid grid-cols-2 gap-3 max-h-[480px] overflow-y-auto pr-1">
+              <!-- Renderizado por renderPhotoGallery() -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Columna Derecha: Registrar Avance & Línea de Tiempo (7 columnas en desktop) -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- Formulario: Registrar nuevo avance -->
+          <form id="bitacoraForm" class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-pen-nib text-sky-400"></i>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-white">Registrar Nuevo Avance</h4>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Acción / Procedimiento Realizado *</label>
+                <input 
+                  type="text" 
+                  id="bitacoraTitle" 
+                  placeholder="Ej: Reemplazo de MOSFET PQ201, Reprogramación BIOS..." 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-sky-500 focus:outline-none" 
+                  required
+                >
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Actualizar Estado de la Orden</label>
+                <select id="bitacoraNewStatus" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:border-sky-500 focus:outline-none">
+                  <option value="received">📥 Recibido</option>
+                  <option value="diagnostic">🔍 En Diagnóstico</option>
+                  <option value="in_progress">⚙️ En Reparación</option>
+                  <option value="waiting_parts">📦 En Espera de Repuesto</option>
+                  <option value="ready">✅ Listo para Entrega</option>
+                  <option value="delivered">🤝 Entregado</option>
+                  <option value="cancelled">❌ Cancelado</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Detalle Técnico / Observaciones *</label>
+              <textarea 
+                id="bitacoraNotes" 
+                rows="2" 
+                placeholder="Explica qué mediciones se hicieron, componentes cambiados, voltajes medidos, o pruebas realizadas..." 
+                class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:border-sky-500 focus:outline-none" 
+                required
+              ></textarea>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <div class="w-1/2">
+                <input 
+                  type="text" 
+                  id="bitacoraTechnician" 
+                  value="Ing. Especialista" 
+                  placeholder="Técnico a cargo" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-300 focus:outline-none"
+                >
+              </div>
+              <button 
+                type="submit" 
+                class="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow"
+              >
+                <i class="fas fa-plus"></i> Guardar Avance
+              </button>
+            </div>
+          </form>
+
+          <!-- Timeline de Procedimientos -->
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <i class="fas fa-clock-rotate-left text-sky-400"></i> Historial de Procedimientos Realizados
+            </h4>
+            <div id="bitacoraTimeline" class="space-y-1">
+              <!-- Renderizado por renderBitacoraTimeline() -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LIGHTBOX: Visor de Fotos en Alta Resolución -->
+  <div id="imageLightbox" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 hidden" onclick="closeLightbox()">
+    <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+      <button onclick="closeLightbox()" class="absolute -top-10 right-0 text-white text-2xl hover:text-sky-400 transition">
+        <i class="fas fa-xmark"></i>
+      </button>
+      <img id="lightboxImg" src="" alt="Zoom" class="max-h-[80vh] max-w-full rounded-xl object-contain shadow-2xl border border-slate-800">
+      <p id="lightboxCaption" class="text-sm font-semibold text-slate-200 mt-3 text-center"></p>
+    </div>
+  </div>
+
+  <!-- MODAL: Previsualización de Impresión y Selección de Formato -->
+  <div id="printModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl my-auto">
+      
+      <!-- Print Header / Bar -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-2xl">
+        <div class="flex items-center gap-3">
+          <div class="h-8 w-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <i class="fas fa-print text-sm"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Comprobante de Servicio GlitchLab</h3>
+            <p class="text-xs text-slate-400">Selecciona el formato e imprime o guarda en PDF</p>
+          </div>
+        </div>
+
+        <!-- Formatos Switcher -->
+        <div class="flex items-center gap-2">
+          <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button id="btnFormatLetter" onclick="setPrintFormat('letter')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500 text-white transition flex items-center gap-1.5">
+              <i class="fas fa-file-lines"></i> Hoja Carta / A4
+            </button>
+            <button id="btnFormatThermal" onclick="setPrintFormat('thermal')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5">
+              <i class="fas fa-receipt"></i> Ticket Térmico 80mm
+            </button>
+          </div>
+
+          <button onclick="triggerPrint()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+            <i class="fas fa-print"></i> Imprimir Ahora
+          </button>
+          
+          <button onclick="closePrintModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+            <i class="fas fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Print Preview Scrollable Area -->
+      <div class="flex-1 overflow-y-auto p-6 bg-slate-950 flex justify-center">
+        <div id="print-area" class="w-full bg-white text-slate-900 rounded-lg shadow-xl p-6">
+          <!-- Inyectado por generatePrintTemplate() -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: Configuración del Taller GlitchLab -->
+  <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl my-auto">
+      
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50 rounded-t-2xl">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fas fa-store text-sky-400"></i> Configuración de GlitchLab
+        </h3>
+        <button onclick="closeShopSettingsModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveShopSettings(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Comercial</label>
+          <input type="text" id="cfgShopName" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Eslogan / Especialidad</label>
+          <input type="text" id="cfgShopSlogan" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Teléfono / WhatsApp</label>
+            <input type="text" id="cfgShopPhone" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Correo Electrónico</label>
+            <input type="email" id="cfgShopEmail" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Dirección del Laboratorio</label>
+          <input type="text" id="cfgShopAddress" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Términos y Condiciones (Impresos al pie del comprobante)</label>
+          <textarea id="cfgShopTerms" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 focus:outline-none"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
+          <button type="button" onclick="closeShopSettingsModal()" class="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-700 text-slate-300 hover:bg-slate-800">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white">
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 bg-slate-950/60">
+    <div class="flex items-center justify-center gap-2 mb-1">
+      <i class="fas fa-microchip text-sky-400"></i>
+      <span class="font-bold text-slate-300">GlitchLab</span>
+      <span>• Especialistas en Microelectrónica & Reparación de Laptops</span>
+    </div>
+    <p>Calle Uruapan #2, Villas de la Paz, 63198 Tepic, Nay. | Tel: +52 311 339 6969</p>
+  </footer>
+
+  <!-- Lógica Principal -->
+  <script src="app.js"></script>
+</body>
+</html>

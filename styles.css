@@ -1,0 +1,171 @@
+/* Estilos personalizados para GlitchLab Sistema de Órdenes */
+:root {
+  --glitch-cyan: #0ea5e9;
+  --glitch-primary: #12a1e2;
+  --glitch-neon: #00ffff;
+  --glitch-dark: #0a0f1d;
+  --glitch-secondary: #0f172a;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0f1d;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Signature Pad Canvas */
+#signatureCanvas {
+  touch-action: none;
+  cursor: crosshair;
+  background-color: #ffffff;
+}
+
+/* Pulso Electrocardiograma Debajo del Logo (Exacto al estilo de glitchlab.mx) */
+.logo-ecg-container {
+  width: 100%;
+  max-width: 138px;
+  height: 12px;
+  margin: -2px auto 0 auto;
+  overflow: visible;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+.logo-ecg-svg {
+  width: 100%;
+  max-width: 138px;
+  height: 100%;
+  display: block;
+}
+
+.logo-ecg-pulse {
+  stroke-dasharray: 40 1000;
+  stroke-dashoffset: 40;
+  opacity: 0;
+  animation: logo-ecg-beat 5s linear infinite;
+  filter: drop-shadow(0 0 3px #00ffff) drop-shadow(0 0 7px #0ea5e9);
+}
+
+@keyframes logo-ecg-beat {
+  0% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+  1% {
+    stroke-dashoffset: 40;
+    opacity: 1;
+  }
+  20% {
+    stroke-dashoffset: -230;
+    opacity: 1;
+  }
+  21% {
+    stroke-dashoffset: -230;
+    opacity: 0;
+  }
+  22% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+}
+
+.logo-ecg-spark {
+  opacity: 0;
+  transform-origin: 104px 1.5px;
+  animation: logo-ecg-spark-flash 5s linear infinite;
+}
+
+@keyframes logo-ecg-spark-flash {
+  0%, 8.5% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  10.5% {
+    opacity: 1;
+    transform: scale(1.6);
+    filter: drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 8px #00ffff) drop-shadow(0 0 12px #ec4899);
+  }
+  13% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+/* Timeline / Bitácora Styles */
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -21px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+}
+
+/* Lightbox Modal */
+#imageLightbox {
+  backdrop-filter: blur(8px);
+}
+
+/* Estilos de Impresión */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  #print-area, #print-area * {
+    visibility: visible;
+  }
+
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+    color: #000000 !important;
+    display: block !important;
+  }
+
+  .no-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Modo Ticket Térmico 80mm */
+  body.ticket-thermal-mode #print-area {
+    width: 78mm !important;
+    max-width: 78mm !important;
+    padding: 2mm !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+}
