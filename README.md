@@ -1,58 +1,54 @@
-# GlitchLab • Sistema de Gestión de Órdenes de Servicio
-**Especializado en Electrónica y Computadoras**
+# GlitchLab • Sistema de Gestión de Órdenes & Bitácora de Microelectrónica
+**Especialistas en Microelectrónica & Reparación de Laptops**  
+*Inspirado en la identidad oficial de [glitchlab.mx](https://glitchlab.mx/)*
 
-Sistema web moderno, rápido y sin dependencias externas complejas, diseñado específicamente para talleres de reparación de electrónica, computadoras, laptops, consolas y dispositivos móviles.
+Sistema web moderno, rápido y sin dependencias externas, diseñado específicamente para talleres y laboratorios de microelectrónica, reparación de placas base/laptops a nivel componente, PCs, consolas y dispositivos móviles.
 
 ---
 
-## 🚀 ¿Cómo abrir y utilizar el sistema?
+## 🔐 Acceso & Seguridad Inicial
 
-No requiere instalar Node.js ni Python. Solo necesitas abrir el archivo `index.html` en tu navegador favorito (Google Chrome, Microsoft Edge, Firefox, Brave):
+Para proteger la información de tus clientes y equipos contra accesos no autorizados, el sistema cuenta con control de inicio de sesión:
+
+- **Usuario:** `admin`
+- **Contraseña inicial:** `glitchlab2026`
+
+> 💡 **Nota:** Puedes cambiar tu usuario y contraseña en cualquier momento dentro de **Ajustes del Taller (ícono de deslizadores) > Seguridad & Contraseña de Acceso**.
+
+---
+
+## 🚀 ¿Cómo abrir el sistema?
+
+No requiere instalar Node.js ni Python. Solo necesitas abrir el archivo `index.html` en tu navegador:
 
 1. Ve a la carpeta del proyecto:
    `C:\Users\Rivera\.gemini\antigravity\scratch\glitchlab-ordenes`
-2. Haz **doble clic en `index.html`**.
-3. ¡Listo! El sistema cargará de inmediato con datos de demostración para que lo pruebes.
-
-> 💡 **Recomendación de espacio de trabajo**: Puedes abrir esta carpeta (`glitchlab-ordenes`) como tu espacio de trabajo activo en tu editor o entorno.
+2. Haz doble clic en `index.html`.
+3. Inicia sesión con tus credenciales.
 
 ---
 
 ## ⚡ Características Principales
 
-### 1. 📋 Órdenes de Servicio Completas
-- **Folio Único Automático**: Formato profesional secuencial (ej. `GL-2026-0001`).
-- **Datos del Cliente**: Nombre completo, teléfono, WhatsApp, correo y dirección.
-- **Datos del Dispositivo**: Tipo (Laptop, PC de Escritorio, Tarjeta Madre/Componente, Celular, Tablet, Consola, Pantalla, etc.), marca, modelo y número de serie/IMEI.
-- **🔐 Seguridad y Contraseñas**:
-  - Campo específico para registrar contraseña alfanumérica, PIN numérico o patrón de desbloqueo.
-  - Opción de ocultar/mostrar con el botón de ojo para privacidad.
-- **🧰 Checklist de Recepción**:
-  - Accesorios entregados (cargador original, cable de poder, batería, funda, control, etc.).
-  - Condición física previa (rayones, golpes, pantalla estrellada, tornillos faltantes, indicios de humedad, equipo no enciende).
-  - Notas de estética adicionales.
-- **⚠️ Falla y Diagnóstico**: Falla reportada por el cliente y diagnóstico preliminar del técnico.
-- **💰 Finanzas Claras**: Costo estimado, anticipo recibido, saldo pendiente calculado automáticamente y método de pago.
-- **✍️ Firma Digital en Pantalla**: Pad de firma interactivo donde el cliente puede firmar directamente con el mouse, lápiz táctil o con el dedo en pantallas táctiles/celulares/tablets.
+### 1. 📋 Órdenes de Servicio Especializadas
+- **Folio Único Automático**: Formato secuencial oficial (ej. `GL-2026-0001`).
+- **Datos del Cliente**: Nombre, teléfono con enlace directo a WhatsApp y llamada, correo y dirección.
+- **Datos del Equipo**: Tipo (Laptop, PC, Tarjeta Madre/Motherboard, Consola, Celular, etc.), marca, modelo y serie/IMEI.
+- **🔐 Seguridad del Dispositivo**: Apartado para guardar contraseña alfanumérica, PIN numérico o patrón de desbloqueo, con botón para ocultar/mostrar.
+- **🧰 Checklist de Recepción & Estado Físico**: Cargador original, cables, batería, golpes, fisuras, humedad previa, etc.
+- **✍️ Firma Digital del Cliente**: Pad táctil interactivo en pantalla donde el cliente firma de conformidad.
 
-### 2. 🖨️ Impresión de Comprobantes Profesionales
-- **Formato Hoja Membretada (Carta / A4)**: Ideal para entregar al cliente o archivar. Incluye datos de GlitchLab, desglose financiero, firma digital capturada y cláusulas legales/términos del servicio.
-- **Formato Ticket Térmico (80mm)**: Optimizado para impresoras térmicas de punto de venta (POS) para ahorrar papel.
-- Función de impresión nativa integrada (`Ctrl + P` o botón directo).
+### 2. 📝 Bitácora Técnica de Procesos & 📸 Evidencia Fotográfica
+- **Historial Cronológico de Procedimientos**: Registra paso a paso cada avance técnico (mediciones de voltajes en bobinas, detección de cortos con cámara térmica, reemplazo de integrados/MOSFETs, reprogramación de BIOS, pruebas de estrés).
+- **Subida de Fotos**: Carga fotos directamente desde el equipo o con la cámara de tu celular/tablet. Las imágenes se optimizan y comprimen automáticamente sin saturar la memoria.
+- **Visor Lightbox en Alta Resolución**: Inspecciona fotos de microscopio y placas a pantalla completa.
+- **💬 Compartir Avance por WhatsApp**: Notifica al cliente de un avance específico en 1 clic.
 
-### 3. 💬 Notificaciones por WhatsApp
-- Cada orden incluye un botón directo de WhatsApp que genera un mensaje preformateado con el nombre del cliente, folio de la orden, equipo, estado actual y saldo pendiente a liquidar.
+### 3. 🖨️ Impresión Dual de Comprobantes
+- **Hoja Membretada (Carta / A4)**: Con logotipo oficial de GlitchLab, pulso de microelectrónica, desglose financiero, firma del cliente, bitácora de trabajos y términos de garantía.
+- **Ticket Térmico (80mm)**: Formato compacto para impresoras POS de punto de venta.
 
-### 4. 📊 Tablero de Control y Filtros Rápidos
-- Tarjetas con métricas en tiempo real: Total de órdenes, equipos en taller, listos para entrega y total de saldos por cobrar.
-- Filtros por estado: *Recibido, En Diagnóstico, En Reparación, Espera de Repuesto, Listo para Entrega, Entregado, Cancelado*.
-- Búsqueda en vivo por cualquier dato (folio, cliente, teléfono, marca o modelo).
-
-### 5. 💾 Persistencia y Copias de Seguridad
-- Los datos se guardan automáticamente en tu navegador (`localStorage`).
-- Puedes exportar e importar copias de seguridad en formato `.json` en cualquier momento desde el menú de opciones.
-- Modal de configuración para personalizar nombre comercial, teléfono, dirección y políticas de garantía de GlitchLab.
-
----
-
-Desarrollado para **GlitchLab • Electrónica & Computadoras**
+### 4. 💾 Respaldos & Configuración
+- Almacenamiento local persistente (`localStorage`).
+- Exportar e importar copias de seguridad en formato `.json`.
+- Configuración de datos de GlitchLab, teléfonos y cláusulas de garantía.
