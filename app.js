@@ -1,7 +1,7 @@
 /**
  * GlitchLab - Sistema de Gestión de Órdenes de Servicio
  * Especialistas en Microelectrónica & Computadoras
- * Estilo oficial inspirado en https://glitchlab.mx/
+ * Módulo Multi-Usuarios con Roles (Admin, Técnico, Recepción)
  */
 
 // Estado global de la aplicación
@@ -11,6 +11,11 @@ const AppState = {
   activeBitacoraOrderId: null,
   filterStatus: 'all',
   searchQuery: '',
+  auth: {
+    isAuthenticated: false,
+    currentUser: null,
+    users: []
+  },
   shopConfig: {
     name: 'GlitchLab',
     slogan: 'Especialistas en Microelectrónica',
@@ -32,15 +37,325 @@ let hasSignature = false;
 
 // Inicialización al cargar el DOM
 document.addEventListener('DOMContentLoaded', () => {
+  loadUsers();
   loadConfig();
   loadOrders();
   setupSignaturePad();
   setupEventListeners();
-  renderDashboard();
-  renderOrders();
+  setupAuthListeners();
+  checkInitialAuth();
 });
 
-// Guardar y cargar configuración del taller
+// ==========================================
+// MÓDULO MULTI-USUARIOS Y ROLES
+// ==========================================
+
+const RoleMeta = {
+  admin: { label: 'Administrador', badge: 'bg-purple-950 text-purple-300 border-purple-800' },
+  technician: { label: 'Técnico Especialista', badge: 'bg-sky-950 text-sky-300 border-sky-800' },
+  reception: { label: 'Recepción / Mostrador', badge: 'bg-emerald-950 text-emerald-300 border-emerald-800' }
+};
+
+function loadUsers() {
+  const saved = localStorage.getItem('glitchlab_users');
+  if (saved) {
+    try {
+      AppState.auth.users = JSON.parse(saved);
+    } catch (e) {
+      console.error('Error cargando usuarios:', e);
+      AppState.auth.users = [];
+    }
+  }
+
+  // Si no hay usuarios registrados, inicializar usuarios demo
+  if (!AppState.auth.users || AppState.auth.users.length === 0) {
+    AppState.auth.users = [
+      {
+        id: 'u_1',
+        name: 'Administrador General',
+        username: 'admin',
+        password: 'glitchlab2026',
+        role: 'admin'
+      },
+      {
+        id: 'u_2',
+        name: 'Ing. Rivera',
+        username: 'rivera',
+        password: '1234',
+        role: 'technician'
+      },
+      {
+        id: 'u_3',
+        name: 'Recepción Mostrador',
+        username: 'recepcion',
+        password: '1234',
+        role: 'reception'
+      }
+    ];
+    saveUsers();
+  }
+}
+
+function saveUsers() {
+  localStorage.setItem('glitchlab_users', JSON.stringify(AppState.auth.users));
+}
+
+function checkInitialAuth() {
+  const sessionUser = sessionStorage.getItem('glitchlab_logged_user');
+  const rememberUser = localStorage.getItem('glitchlab_remember_user');
+
+  const usernameToFind = sessionUser || rememberUser;
+
+  if (usernameToFind) {
+    const user = AppState.auth.users.find(u => u.username === usernameToFind);
+    if (user) {
+      grantAccess(user);
+      return;
+    }
+  }
+  
+  lockSystem();
+}
+
+function setupAuthListeners() {
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLoginSubmit);
+  }
+
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', handleLogout);
+  }
+
+  // Toggle mostrar contraseña en login
+  const btnToggleLoginPass = document.getElementById('btnToggleLoginPass');
+  const loginPassword = document.getElementById('loginPassword');
+  if (btnToggleLoginPass && loginPassword) {
+    btnToggleLoginPass.addEventListener('click', () => {
+      if (loginPassword.type === 'password') {
+        loginPassword.type = 'text';
+        btnToggleLoginPass.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      } else {
+        loginPassword.type = 'password';
+        btnToggleLoginPass.innerHTML = '<i class="fas fa-eye"></i>';
+      }
+    });
+  }
+
+  // Formulario para crear nuevo usuario
+  const newUserForm = document.getElementById('newUserForm');
+  if (newUserForm) {
+    newUserForm.addEventListener('submit', handleCreateNewUser);
+  }
+}
+
+function handleLoginSubmit(e) {
+  e.preventDefault();
+
+  const userField = document.getElementById('loginUsername');
+  const passField = document.getElementById('loginPassword');
+  const rememberCheckbox = document.getElementById('rememberMeCheckbox');
+  const errorMsg = document.getElementById('loginErrorMessage');
+  const loginCard = document.getElementById('loginCard');
+
+  const usernameInput = userField.value.trim().toLowerCase();
+  const passwordInput = passField.value.trim();
+
+  // Buscar coincidencia en la lista de usuarios registrados
+  const matchedUser = AppState.auth.users.find(u => 
+    u.username.toLowerCase() === usernameInput && u.password === passwordInput
+  );
+
+  if (matchedUser) {
+    errorMsg.classList.add('hidden');
+
+    if (rememberCheckbox && rememberCheckbox.checked) {
+      localStorage.setItem('glitchlab_remember_user', matchedUser.username);
+    } else {
+      localStorage.removeItem('glitchlab_remember_user');
+    }
+
+    sessionStorage.setItem('glitchlab_logged_user', matchedUser.username);
+    grantAccess(matchedUser);
+
+    userField.value = '';
+    passField.value = '';
+    showToast(`Bienvenido, ${matchedUser.name} (${RoleMeta[matchedUser.role]?.label || matchedUser.role}).`);
+  } else {
+    errorMsg.classList.remove('hidden');
+    loginCard.classList.remove('animate-shake');
+    void loginCard.offsetWidth;
+    loginCard.classList.add('animate-shake');
+    passField.value = '';
+    passField.focus();
+  }
+}
+
+function grantAccess(user) {
+  AppState.auth.isAuthenticated = true;
+  AppState.auth.currentUser = user;
+
+  const loginScreen = document.getElementById('loginScreen');
+  const mainApp = document.getElementById('mainApp');
+  const navUserBadge = document.getElementById('navUserBadge');
+  const navUserRole = document.getElementById('navUserRole');
+
+  if (loginScreen) loginScreen.classList.add('hidden');
+  if (mainApp) mainApp.classList.remove('hidden');
+  
+  if (navUserBadge) navUserBadge.innerText = user.name || user.username;
+  if (navUserRole) navUserRole.innerText = RoleMeta[user.role]?.label || user.role;
+
+  // Prellenar nombre de técnico con el usuario activo
+  const techInput = document.getElementById('technicianName');
+  if (techInput) techInput.value = user.name || user.username;
+
+  const bitacoraTech = document.getElementById('bitacoraTechnician');
+  if (bitacoraTech) bitacoraTech.value = user.name || user.username;
+
+  renderDashboard();
+  renderOrders();
+}
+
+function lockSystem() {
+  AppState.auth.isAuthenticated = false;
+  AppState.auth.currentUser = null;
+
+  const loginScreen = document.getElementById('loginScreen');
+  const mainApp = document.getElementById('mainApp');
+
+  if (mainApp) mainApp.classList.add('hidden');
+  if (loginScreen) {
+    loginScreen.classList.remove('hidden');
+    const userField = document.getElementById('loginUsername');
+    if (userField) userField.focus();
+  }
+}
+
+function handleLogout() {
+  if (confirm('¿Deseas cerrar tu sesión de trabajo en GlitchLab?')) {
+    sessionStorage.removeItem('glitchlab_logged_user');
+    localStorage.removeItem('glitchlab_remember_user');
+    lockSystem();
+    showToast('Sesión cerrada correctamente.');
+  }
+}
+
+// Agregar nuevo usuario desde el panel de Ajustes
+function handleCreateNewUser(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('newUserName').value.trim();
+  const username = document.getElementById('newUserUsername').value.trim().toLowerCase();
+  const password = document.getElementById('newUserPassword').value.trim();
+  const role = document.getElementById('newUserRole').value;
+
+  if (username.length < 3) {
+    alert('El nombre de usuario debe tener al menos 3 caracteres.');
+    return;
+  }
+
+  if (password.length < 4) {
+    alert('La contraseña debe tener al menos 4 caracteres.');
+    return;
+  }
+
+  // Verificar si ya existe el nombre de usuario
+  if (AppState.auth.users.some(u => u.username.toLowerCase() === username)) {
+    alert(`El nombre de usuario "${username}" ya está registrado. Por favor elige otro.`);
+    return;
+  }
+
+  const newUser = {
+    id: 'u_' + Date.now(),
+    name,
+    username,
+    password,
+    role
+  };
+
+  AppState.auth.users.push(newUser);
+  saveUsers();
+  renderUsersList();
+
+  document.getElementById('newUserName').value = '';
+  document.getElementById('newUserUsername').value = '';
+  document.getElementById('newUserPassword').value = '';
+
+  showToast(`Usuario "${name}" creado exitosamente.`);
+}
+
+// Renderizar la lista de usuarios en el modal de Ajustes
+function renderUsersList() {
+  const container = document.getElementById('usersListTableBody');
+  if (!container) return;
+
+  const currentLoggedIn = AppState.auth.currentUser?.username;
+
+  container.innerHTML = AppState.auth.users.map(u => {
+    const roleInfo = RoleMeta[u.role] || RoleMeta.technician;
+    const isMe = u.username === currentLoggedIn;
+
+    return `
+      <tr class="border-b border-slate-800/80 hover:bg-slate-800/40 text-xs">
+        <td class="py-2.5 px-3">
+          <div class="font-bold text-white flex items-center gap-1.5">
+            ${escapeHtml(u.name)}
+            ${isMe ? '<span class="text-[10px] text-sky-400 font-normal">(Tú)</span>' : ''}
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono">@${escapeHtml(u.username)}</div>
+        </td>
+        <td class="py-2.5 px-3">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${roleInfo.badge}">
+            ${roleInfo.label}
+          </span>
+        </td>
+        <td class="py-2.5 px-3 text-slate-400 font-mono text-[11px]">
+          ••••••••
+        </td>
+        <td class="py-2.5 px-3 text-right">
+          ${isMe ? `
+            <span class="text-slate-600 text-[11px] italic">Activo</span>
+          ` : `
+            <button onclick="deleteUser('${u.id}')" class="p-1.5 text-slate-500 hover:text-red-400 transition" title="Eliminar usuario">
+              <i class="fas fa-trash-can"></i>
+            </button>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function deleteUser(userId) {
+  const user = AppState.auth.users.find(u => u.id === userId);
+  if (!user) return;
+
+  if (AppState.auth.currentUser?.id === userId) {
+    alert('No puedes eliminar tu propio usuario mientras tienes la sesión iniciada.');
+    return;
+  }
+
+  // Comprobar que quede al menos 1 admin
+  const remainingAdmins = AppState.auth.users.filter(u => u.id !== userId && u.role === 'admin');
+  if (user.role === 'admin' && remainingAdmins.length === 0) {
+    alert('No puedes eliminar el único administrador del sistema.');
+    return;
+  }
+
+  if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${user.name}" (@${user.username})?`)) {
+    AppState.auth.users = AppState.auth.users.filter(u => u.id !== userId);
+    saveUsers();
+    renderUsersList();
+    showToast(`Usuario "${user.name}" eliminado.`);
+  }
+}
+
+// ==========================================
+// CONFIGURACIÓN Y PERSISTENCIA
+// ==========================================
+
 function loadConfig() {
   const saved = localStorage.getItem('glitchlab_config');
   if (saved) {
@@ -56,7 +371,6 @@ function saveConfig() {
   localStorage.setItem('glitchlab_config', JSON.stringify(AppState.shopConfig));
 }
 
-// Guardar y cargar órdenes
 function loadOrders() {
   const saved = localStorage.getItem('glitchlab_orders');
   if (saved) {
@@ -75,7 +389,7 @@ function saveOrders() {
   localStorage.setItem('glitchlab_orders', JSON.stringify(AppState.orders));
 }
 
-// Demo data enriquecida con fotos y bitácoras de microelectrónica
+// Demo data
 function seedDemoOrders() {
   AppState.orders = [
     {
@@ -101,7 +415,7 @@ function seedDemoOrders() {
       },
       issue: 'El equipo se apaga a los 10 minutos de encender. Cortocircuito aparente al conectar GPU.',
       initialDiagnosis: 'Sobrecalentamiento y línea principal de 19V inestable con caída de voltaje en etapa secundaria.',
-      technician: 'Ing. Especialista',
+      technician: 'Ing. Rivera',
       costs: {
         estimated: 2200,
         advance: 800,
@@ -129,7 +443,7 @@ function seedDemoOrders() {
           date: new Date(Date.now() - 86400000 * 3).toISOString(),
           title: 'Recepción y apertura de orden',
           notes: 'Se recibe laptop ASUS ROG con cargador original para diagnóstico a nivel componente.',
-          technician: 'Recepción',
+          technician: 'Recepción Mostrador',
           status: 'received'
         },
         {
@@ -137,7 +451,7 @@ function seedDemoOrders() {
           date: new Date(Date.now() - 86400000 * 2).toISOString(),
           title: 'Desarme y análisis microscópico',
           notes: 'Se desarmó el chasis. Medición con multímetro en bobinas secundarias. Resistencia a tierra en riel de 19V mide apenas 0.8 ohms.',
-          technician: 'Ing. Especialista',
+          technician: 'Ing. Rivera',
           status: 'diagnostic'
         },
         {
@@ -145,7 +459,7 @@ function seedDemoOrders() {
           date: new Date(Date.now() - 86400000 * 1).toISOString(),
           title: 'Inyección de voltaje y reemplazo de MOSFET',
           notes: 'Con fuente de laboratorio se inyectó 1V y se detectó calentamiento en MOSFET PQ201. Se procedió a retirar con tobera de aire caliente y colocar componente original.',
-          technician: 'Ing. Especialista',
+          technician: 'Ing. Rivera',
           status: 'in_progress'
         }
       ]
@@ -173,7 +487,7 @@ function seedDemoOrders() {
       },
       issue: 'Pantallazos azules continuos al encender. No entra al sistema operativo.',
       initialDiagnosis: 'Corrupción de BIOS y falla en capacitor de filtrado.',
-      technician: 'Ing. Especialista',
+      technician: 'Ing. Rivera',
       costs: {
         estimated: 1600,
         advance: 600,
@@ -188,7 +502,7 @@ function seedDemoOrders() {
           date: new Date(Date.now() - 86400000 * 4).toISOString(),
           title: 'Equipo recibido en laboratorio',
           notes: 'Ingreso al taller para pruebas de estabilidad y microelectrónica.',
-          technician: 'Recepción',
+          technician: 'Recepción Mostrador',
           status: 'received'
         },
         {
@@ -196,7 +510,7 @@ function seedDemoOrders() {
           date: new Date(Date.now() - 86400000 * 2).toISOString(),
           title: 'Reprogramación SPI Flash (BIOS)',
           notes: 'Se desoldó la memoria SPI Flash y se reprogramó el firmware limpio con programador RT809H.',
-          technician: 'Ing. Especialista',
+          technician: 'Ing. Rivera',
           status: 'in_progress'
         },
         {
@@ -204,7 +518,7 @@ function seedDemoOrders() {
           date: new Date(Date.now() - 86400000 * 0.5).toISOString(),
           title: 'Pruebas de estrés superadas',
           notes: 'Equipo corriendo FurMark y Cinebench por 4 horas sin caídas ni pantallas azules. Listo para entregar.',
-          technician: 'Ing. Especialista',
+          technician: 'Ing. Rivera',
           status: 'ready'
         }
       ]
@@ -221,13 +535,11 @@ function setupSignaturePad() {
   signatureCtx = signatureCanvas.getContext('2d');
   resizeSignatureCanvas();
 
-  // Eventos de Mouse
   signatureCanvas.addEventListener('mousedown', startDrawing);
   signatureCanvas.addEventListener('mousemove', draw);
   signatureCanvas.addEventListener('mouseup', stopDrawing);
   signatureCanvas.addEventListener('mouseleave', stopDrawing);
 
-  // Eventos Táctiles
   signatureCanvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     const touch = e.touches[0];
@@ -398,7 +710,7 @@ function setupEventListeners() {
     });
   }
 
-  // Toggle de visibilidad de contraseña
+  // Toggle de visibilidad de contraseña de equipo
   const btnTogglePassword = document.getElementById('btnTogglePassword');
   if (btnTogglePassword && passwordInput) {
     btnTogglePassword.addEventListener('click', () => {
@@ -424,20 +736,20 @@ function setupEventListeners() {
     btnClearSig.addEventListener('click', clearSignature);
   }
 
-  // Manejo de Fotos: Input de subida en Bitácora
+  // Fotos Input
   const photoFileInput = document.getElementById('photoFileInput');
   if (photoFileInput) {
     photoFileInput.addEventListener('change', handlePhotoUpload);
   }
 
-  // Formulario de nueva entrada en bitácora
+  // Formulario Bitácora
   const bitacoraForm = document.getElementById('bitacoraForm');
   if (bitacoraForm) {
     bitacoraForm.addEventListener('submit', handleAddBitacoraEntry);
   }
 }
 
-// Renderizar Métricas del Dashboard
+// Renderizar Métricas
 function renderDashboard() {
   const total = AppState.orders.length;
   const inShop = AppState.orders.filter(o => ['received', 'diagnostic', 'in_progress', 'waiting_parts'].includes(o.status)).length;
@@ -481,7 +793,6 @@ function updateFilterBadges() {
   }
 }
 
-// Diccionario de configuración de estados
 const StatusMeta = {
   received: { label: 'Recibido', color: 'bg-blue-500/20 text-blue-400 border-blue-500/40', icon: 'fa-inbox' },
   diagnostic: { label: 'En Diagnóstico', color: 'bg-amber-500/20 text-amber-400 border-amber-500/40', icon: 'fa-microchip' },
@@ -544,8 +855,6 @@ function renderOrders() {
 
     const balance = order.costs?.balance ?? 0;
     const est = order.costs?.estimated ?? 0;
-
-    // Conteo de fotos y bitácora
     const photoCount = order.photos ? order.photos.length : 0;
     const logCount = order.bitacora ? order.bitacora.length : 0;
 
@@ -623,13 +932,11 @@ function renderOrders() {
               </span>
             </div>
 
-            <!-- Bloque Contraseña -->
             <div class="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-slate-800/60">
               <span class="flex items-center gap-1.5"><i class="fas fa-lock text-amber-400"></i> Acceso / Clave:</span>
               ${passwordDisplay}
             </div>
 
-            <!-- Falla Reportada -->
             <div class="text-xs bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50 mt-2">
               <p class="text-slate-400 font-semibold mb-0.5 flex items-center gap-1">
                 <i class="fas fa-triangle-exclamation text-amber-400 text-[10px]"></i> Falla reportada:
@@ -638,7 +945,7 @@ function renderOrders() {
             </div>
           </div>
 
-          <!-- Botón Destacado: Bitácora & Fotos del Proceso -->
+          <!-- Botón Bitácora & Fotos -->
           <button 
             onclick="openBitacoraModal('${order.id}')" 
             class="w-full mb-3 py-2 px-3 bg-gradient-to-r from-slate-800 to-slate-800/80 hover:from-sky-950/60 hover:to-slate-800 border border-slate-700/80 hover:border-sky-500/50 text-slate-200 hover:text-white rounded-xl text-xs font-semibold flex items-center justify-between transition group/btn"
@@ -662,7 +969,7 @@ function renderOrders() {
 
         </div>
 
-        <!-- Footer de la Tarjeta con Costos y Cambio Rápido de Estado -->
+        <!-- Footer Tarjeta -->
         <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between">
           <div>
             <div class="text-[11px] text-slate-400">Presupuesto / Saldo:</div>
@@ -672,7 +979,6 @@ function renderOrders() {
             </div>
           </div>
 
-          <!-- Selector rápido de estado -->
           <select onchange="updateOrderStatusQuick('${order.id}', this.value)" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-1 focus:ring-sky-500 focus:outline-none">
             <option value="received" ${order.status === 'received' ? 'selected' : ''}>📥 Recibido</option>
             <option value="diagnostic" ${order.status === 'diagnostic' ? 'selected' : ''}>🔍 En Diagnóstico</option>
@@ -689,7 +995,7 @@ function renderOrders() {
 }
 
 // ==========================================
-// MÓDULO DE BITÁCORA Y SUBIDA DE FOTOS
+// BITÁCORA Y FOTOS
 // ==========================================
 
 function openBitacoraModal(orderId) {
@@ -701,9 +1007,12 @@ function openBitacoraModal(orderId) {
   document.getElementById('bitacoraFolioBadge').innerText = order.id;
   document.getElementById('bitacoraEquipmentHeader').innerText = `${order.equipment.type} ${order.equipment.brand} ${order.equipment.model}`;
   document.getElementById('bitacoraClientHeader').innerText = order.client.name;
-  
-  // Set default status in log form to current order status
   document.getElementById('bitacoraNewStatus').value = order.status;
+
+  // Prellenar técnico responsable con usuario activo
+  if (AppState.auth.currentUser) {
+    document.getElementById('bitacoraTechnician').value = AppState.auth.currentUser.name || AppState.auth.currentUser.username;
+  }
 
   renderBitacoraTimeline(order);
   renderPhotoGallery(order);
@@ -718,7 +1027,6 @@ function closeBitacoraModal() {
   AppState.activeBitacoraOrderId = null;
 }
 
-// Renderizar la línea de tiempo de la bitácora
 function renderBitacoraTimeline(order) {
   const container = document.getElementById('bitacoraTimeline');
   if (!container) return;
@@ -735,7 +1043,6 @@ function renderBitacoraTimeline(order) {
     return;
   }
 
-  // Ordenar cronológicamente descendente (más reciente arriba)
   const sorted = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   container.innerHTML = sorted.map(log => {
@@ -769,7 +1076,6 @@ function renderBitacoraTimeline(order) {
   }).join('');
 }
 
-// Renderizar galería de fotos
 function renderPhotoGallery(order) {
   const container = document.getElementById('photoGalleryContainer');
   const countBadge = document.getElementById('photoCountBadge');
@@ -814,7 +1120,6 @@ function renderPhotoGallery(order) {
   }).join('');
 }
 
-// Agregar nuevo avance a la bitácora
 function handleAddBitacoraEntry(e) {
   e.preventDefault();
   const orderId = AppState.activeBitacoraOrderId;
@@ -823,7 +1128,7 @@ function handleAddBitacoraEntry(e) {
 
   const title = document.getElementById('bitacoraTitle').value.trim();
   const notes = document.getElementById('bitacoraNotes').value.trim();
-  const technician = document.getElementById('bitacoraTechnician').value.trim() || 'Ing. Especialista';
+  const technician = document.getElementById('bitacoraTechnician').value.trim() || AppState.auth.currentUser?.name || 'Ing. Especialista';
   const newStatus = document.getElementById('bitacoraNewStatus').value;
 
   if (!order.bitacora) order.bitacora = [];
@@ -839,7 +1144,6 @@ function handleAddBitacoraEntry(e) {
 
   order.bitacora.unshift(newEntry);
 
-  // Actualizar también el estado general de la orden si se seleccionó uno diferente
   if (order.status !== newStatus) {
     order.status = newStatus;
   }
@@ -854,7 +1158,6 @@ function handleAddBitacoraEntry(e) {
   showToast('Avance registrado en bitácora.');
 }
 
-// Subir y comprimir fotos con Canvas en el navegador
 function handlePhotoUpload(e) {
   const files = e.target.files;
   if (!files || files.length === 0) return;
@@ -875,7 +1178,6 @@ function handlePhotoUpload(e) {
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        // Redimensionar para optimizar almacenamiento en LocalStorage
         const maxDim = 1000;
         let width = img.width;
         let height = img.height;
@@ -896,7 +1198,6 @@ function handlePhotoUpload(e) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Comprimir a JPEG 0.75
         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
 
         order.photos.unshift({
@@ -922,7 +1223,6 @@ function handlePhotoUpload(e) {
   e.target.value = '';
 }
 
-// Eliminar foto
 function deletePhoto(orderId, photoId) {
   const order = AppState.orders.find(o => o.id === orderId);
   if (!order || !order.photos) return;
@@ -936,7 +1236,6 @@ function deletePhoto(orderId, photoId) {
   }
 }
 
-// Lightbox para zoom de imagen
 function openLightbox(url, caption) {
   const lightbox = document.getElementById('imageLightbox');
   const img = document.getElementById('lightboxImg');
@@ -954,7 +1253,6 @@ function closeLightbox() {
   if (lightbox) lightbox.classList.add('hidden');
 }
 
-// Compartir un avance específico por WhatsApp
 function shareBitacoraEntryWhatsApp(orderId, bitacoraId) {
   const order = AppState.orders.find(o => o.id === orderId);
   if (!order) return;
@@ -980,7 +1278,7 @@ function shareBitacoraEntryWhatsApp(orderId, bitacoraId) {
   window.open(url, '_blank');
 }
 
-// Abrir Modal de Nueva Orden
+// Modal de Nueva Orden
 function openNewOrderModal() {
   AppState.currentOrder = null;
   const form = document.getElementById('orderForm');
@@ -991,6 +1289,11 @@ function openNewOrderModal() {
   document.getElementById('orderDate').value = new Date().toISOString().slice(0, 16);
   document.getElementById('orderStatusSelect').value = 'received';
   
+  // Asignar técnico por defecto al usuario logueado
+  if (AppState.auth.currentUser) {
+    document.getElementById('technicianName').value = AppState.auth.currentUser.name || AppState.auth.currentUser.username;
+  }
+
   document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false);
   document.querySelectorAll('input[name="condition"]').forEach(cb => cb.checked = false);
 
@@ -1015,19 +1318,16 @@ function editOrder(orderId) {
   document.getElementById('orderDate').value = new Date(order.date).toISOString().slice(0, 16);
   document.getElementById('orderStatusSelect').value = order.status || 'received';
 
-  // Datos Cliente
   document.getElementById('clientName').value = order.client?.name || '';
   document.getElementById('clientPhone').value = order.client?.phone || '';
   document.getElementById('clientEmail').value = order.client?.email || '';
   document.getElementById('clientAddress').value = order.client?.address || '';
 
-  // Datos Equipo
   document.getElementById('equipmentType').value = order.equipment?.type || 'Laptop';
   document.getElementById('equipmentBrand').value = order.equipment?.brand || '';
   document.getElementById('equipmentModel').value = order.equipment?.model || '';
   document.getElementById('equipmentSerial').value = order.equipment?.serial || '';
   
-  // Seguridad y Contraseña
   const lockType = order.equipment?.lockType || 'password';
   document.getElementById('lockType').value = lockType;
   const passContainer = document.getElementById('passwordFieldContainer');
@@ -1039,7 +1339,6 @@ function editOrder(orderId) {
     document.getElementById('devicePassword').value = order.equipment?.password || '';
   }
 
-  // Checkboxes
   const accessories = order.equipment?.accessories || [];
   document.querySelectorAll('input[name="accessories"]').forEach(cb => {
     cb.checked = accessories.includes(cb.value);
@@ -1052,12 +1351,10 @@ function editOrder(orderId) {
 
   document.getElementById('conditionNotes').value = order.equipment?.conditionNotes || '';
 
-  // Falla y Diagnóstico
   document.getElementById('issueDescription').value = order.issue || '';
   document.getElementById('initialDiagnosis').value = order.initialDiagnosis || '';
   document.getElementById('technicianName').value = order.technician || 'Ing. Especialista';
 
-  // Costos
   document.getElementById('costEstimated').value = order.costs?.estimated || 0;
   document.getElementById('costAdvance').value = order.costs?.advance || 0;
   document.getElementById('costPaymentMethod').value = order.costs?.paymentMethod || 'Efectivo';
@@ -1066,7 +1363,6 @@ function editOrder(orderId) {
   const adv = order.costs?.advance || 0;
   document.getElementById('costBalanceDisplay').innerText = `$${Math.max(0, est - adv).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
 
-  // Firma
   clearSignature();
   if (order.signature) {
     const img = new Image();
@@ -1082,7 +1378,7 @@ function editOrder(orderId) {
   setTimeout(() => resizeSignatureCanvas(), 100);
 }
 
-// Guardar Orden (Nueva o Edición)
+// Guardar Orden
 function handleSaveOrder(e) {
   e.preventDefault();
 
@@ -1136,6 +1432,8 @@ function handleSaveOrder(e) {
   const existingIndex = AppState.orders.findIndex(o => o.id === id);
   const existingOrder = existingIndex >= 0 ? AppState.orders[existingIndex] : null;
 
+  const currentUserName = AppState.auth.currentUser?.name || AppState.auth.currentUser?.username || 'Recepción';
+
   const orderData = {
     id,
     date: dateVal ? new Date(dateVal).toISOString() : new Date().toISOString(),
@@ -1144,7 +1442,7 @@ function handleSaveOrder(e) {
     equipment,
     issue: document.getElementById('issueDescription').value.trim(),
     initialDiagnosis: document.getElementById('initialDiagnosis').value.trim(),
-    technician: document.getElementById('technicianName').value.trim() || 'Ing. Especialista',
+    technician: document.getElementById('technicianName').value.trim() || currentUserName,
     costs,
     signature: signatureData,
     photos: existingOrder?.photos || [],
@@ -1154,7 +1452,7 @@ function handleSaveOrder(e) {
         date: new Date().toISOString(),
         title: 'Equipo recibido en taller',
         notes: 'Ingreso inicial a GlitchLab para revisión a nivel componente.',
-        technician: document.getElementById('technicianName').value.trim() || 'Recepción',
+        technician: currentUserName,
         status: status
       }
     ]
@@ -1186,13 +1484,15 @@ function updateOrderStatusQuick(orderId, newStatus) {
   const oldStatus = order.status;
   order.status = newStatus;
   
+  const currentUserName = AppState.auth.currentUser?.name || AppState.auth.currentUser?.username || 'Taller';
+
   if (!order.bitacora) order.bitacora = [];
   order.bitacora.unshift({
     id: 'bit_' + Date.now(),
     date: new Date().toISOString(),
     title: `Estado cambiado a ${StatusMeta[newStatus]?.label || newStatus}`,
     notes: `Cambio rápido de estatus de ${StatusMeta[oldStatus]?.label} a ${StatusMeta[newStatus]?.label}`,
-    technician: 'Sistema / Taller',
+    technician: currentUserName,
     status: newStatus
   });
 
@@ -1357,7 +1657,6 @@ function generatePrintTemplate(order, format) {
     container.innerHTML = `
       <div style="font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; color: #1e293b; max-width: 800px; margin: 0 auto; padding: 24px; border: 1px solid #cbd5e1; border-radius: 8px;">
         
-        <!-- Header con Logo e Identidad GlitchLab -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0ea5e9; padding-bottom: 16px; margin-bottom: 20px;">
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -1386,9 +1685,7 @@ function generatePrintTemplate(order, format) {
           </div>
         </div>
 
-        <!-- Secciones: Cliente y Equipo -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-          
           <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px;">
             <div style="font-size: 12px; font-weight: 700; color: #0284c7; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
               Datos del Cliente
@@ -1416,7 +1713,6 @@ function generatePrintTemplate(order, format) {
           </div>
         </div>
 
-        <!-- Falla Reportada y Checklist -->
         <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;">
           <div style="font-size: 12px; font-weight: 700; color: #0284c7; text-transform: uppercase; margin-bottom: 8px;">
             Motivo de Ingreso & Diagnóstico
@@ -1442,7 +1738,6 @@ function generatePrintTemplate(order, format) {
           </div>
         </div>
 
-        <!-- Bitácora Técnica de Avance (si tiene registros) -->
         ${order.bitacora && order.bitacora.length > 0 ? `
           <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;">
             <div style="font-size: 12px; font-weight: 700; color: #0284c7; text-transform: uppercase; margin-bottom: 8px;">
@@ -1458,7 +1753,6 @@ function generatePrintTemplate(order, format) {
           </div>
         ` : ''}
 
-        <!-- Desglose Financiero -->
         <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
           <table style="width: 280px; border-collapse: collapse; font-size: 13px;">
             <tr>
@@ -1476,7 +1770,6 @@ function generatePrintTemplate(order, format) {
           </table>
         </div>
 
-        <!-- Firmas -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 25px; margin-bottom: 20px; text-align: center;">
           <div>
             <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
@@ -1497,7 +1790,6 @@ function generatePrintTemplate(order, format) {
           </div>
         </div>
 
-        <!-- Términos y Condiciones -->
         <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 10px; color: #64748b; line-height: 1.4; text-align: justify;">
           <strong>Términos del Servicio:</strong><br>
           ${AppState.shopConfig.terms.replace(/\n/g, '<br>')}
@@ -1527,6 +1819,9 @@ function openShopSettingsModal() {
   document.getElementById('cfgShopAddress').value = AppState.shopConfig.address;
   document.getElementById('cfgShopTerms').value = AppState.shopConfig.terms;
 
+  // Renderizar la lista de usuarios en Ajustes
+  renderUsersList();
+
   const modal = document.getElementById('settingsModal');
   modal.classList.remove('hidden');
 }
@@ -1550,12 +1845,13 @@ function handleSaveShopSettings(e) {
   showToast('Configuración del taller guardada.');
 }
 
-// Exportar Respaldo JSON
+// Exportar Respaldo JSON con Usuarios
 function exportDataBackup() {
   const data = {
-    version: '2.0',
+    version: '3.0',
     exportDate: new Date().toISOString(),
     config: AppState.shopConfig,
+    users: AppState.auth.users,
     orders: AppState.orders
   };
 
@@ -1569,7 +1865,6 @@ function exportDataBackup() {
   showToast('Respaldo descargado con éxito.');
 }
 
-// Importar Respaldo JSON
 function importDataBackup() {
   const fileInput = document.getElementById('importFileInput');
   if (!fileInput) return;
@@ -1589,6 +1884,10 @@ function importDataBackup() {
         if (data.config) {
           AppState.shopConfig = { ...AppState.shopConfig, ...data.config };
           saveConfig();
+        }
+        if (Array.isArray(data.users)) {
+          AppState.auth.users = data.users;
+          saveUsers();
         }
         renderDashboard();
         renderOrders();
