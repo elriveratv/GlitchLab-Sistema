@@ -31,184 +31,313 @@
 
 <body class="bg-[#0a0f1d] text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-sky-500 selection:text-white">
 
-  <!-- Top Navigation Bar con el Logo Idéntico a glitchlab.mx -->
-  <header class="bg-[#0f172a]/95 backdrop-blur sticky top-0 z-30 border-b border-slate-800 shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+  <!-- ========================================== -->
+  <!-- PANTALLA DE INICIO DE SESIÓN (LOGIN)       -->
+  <!-- ========================================== -->
+  <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#070b14] overflow-y-auto">
+    <div id="loginCard" class="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl relative my-auto">
       
-      <!-- Brand Logo con Pulso Electrocardiograma de glitchlab.mx -->
-      <div class="flex items-center gap-3">
-        <a href="#" class="flex flex-col items-center justify-center select-none w-fit group">
-          <div class="flex items-center gap-2">
-            <i class="fas fa-microchip text-sky-400 text-3xl group-hover:scale-105 transition-transform flex-shrink-0"></i>
-            <span class="font-bold text-2xl tracking-wider whitespace-nowrap text-white">Glitch<span class="text-sky-400">Lab</span></span>
-          </div>
-          <!-- Pulso Electrocardiograma Animado -->
-          <div class="logo-ecg-container">
-            <svg class="logo-ecg-svg" viewBox="0 0 200 20" preserveAspectRatio="none">
-              <path d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="rgba(14, 165, 233, 0.25)" stroke-width="1.3" pathLength="230"></path>
-              <path class="logo-ecg-pulse" d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="230"></path>
-              <circle class="logo-ecg-spark" cx="104" cy="1.5" r="2" fill="#ffffff"></circle>
-            </svg>
-          </div>
-        </a>
-
-        <div class="hidden sm:block pl-3 border-l border-slate-700/80">
-          <span class="text-xs font-bold text-sky-400 uppercase tracking-wider block">Especialistas en Microelectrónica</span>
-          <span class="text-[11px] text-slate-400">Sistema de Órdenes & Bitácora de Laboratorio</span>
+      <!-- Logo Oficial con Electrocardiograma Animado -->
+      <div class="flex flex-col items-center justify-center mb-6">
+        <div class="flex items-center gap-2.5">
+          <i class="fas fa-microchip text-sky-400 text-3xl"></i>
+          <span class="font-bold text-3xl tracking-wider text-white">Glitch<span class="text-sky-400">Lab</span></span>
         </div>
+        
+        <!-- Pulso ECG -->
+        <div class="logo-ecg-container mt-1">
+          <svg class="logo-ecg-svg" viewBox="0 0 200 20" preserveAspectRatio="none">
+            <path d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="rgba(14, 165, 233, 0.25)" stroke-width="1.3" pathLength="230"></path>
+            <path class="logo-ecg-pulse" d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="230"></path>
+            <circle class="logo-ecg-spark" cx="104" cy="1.5" r="2" fill="#ffffff"></circle>
+          </svg>
+        </div>
+
+        <p class="text-xs uppercase tracking-widest font-semibold text-slate-400 mt-3">Especialistas en Microelectrónica</p>
+        <p class="text-[11px] text-sky-400 font-medium">Portal de Acceso al Laboratorio</p>
       </div>
 
-      <!-- Quick Search Bar -->
-      <div class="flex-1 max-w-md min-w-[240px]">
-        <div class="relative">
-          <i class="fas fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+      <!-- Mensaje de Error en Login -->
+      <div id="loginErrorMessage" class="hidden mb-4 p-3 bg-red-950/60 border border-red-500/40 rounded-xl text-red-300 text-xs flex items-center gap-2">
+        <i class="fas fa-triangle-exclamation text-red-400 text-sm"></i>
+        <span>Credenciales no válidas. Acceso denegado.</span>
+      </div>
+
+      <!-- Formulario de Acceso -->
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+            <i class="fas fa-user text-sky-400"></i> Usuario
+          </label>
           <input 
             type="text" 
-            id="searchInput" 
-            placeholder="Buscar por Folio, Cliente, Teléfono, Serie o Marca..." 
-            class="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+            id="loginUsername" 
+            placeholder="Ingresa tu usuario" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition" 
+            required 
+            autocomplete="username"
           >
         </div>
-      </div>
 
-      <!-- Header Actions -->
-      <div class="flex items-center gap-2">
-        <button 
-          id="btnNewOrder" 
-          class="px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-sky-500/25 transition flex items-center gap-2"
-        >
-          <i class="fas fa-plus"></i>
-          <span>Nueva Orden</span>
-        </button>
-
-        <!-- Dropdown Herramientas / Ajustes -->
-        <div class="relative group">
-          <button class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition" title="Opciones y Respaldos">
-            <i class="fas fa-sliders"></i>
-          </button>
-          
-          <div class="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 hidden group-hover:block hover:block z-40">
-            <button onclick="openShopSettingsModal()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
-              <i class="fas fa-store text-sky-400 w-4"></i> Datos del Taller & Políticas
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+            <i class="fas fa-lock text-sky-400"></i> Contraseña
+          </label>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="loginPassword" 
+              placeholder="••••••••••••" 
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-4 pr-11 py-2.5 text-sm text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition" 
+              required 
+              autocomplete="current-password"
+            >
+            <button type="button" id="btnToggleLoginPass" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition">
+              <i class="fas fa-eye"></i>
             </button>
-            <div class="border-t border-slate-800 my-1"></div>
-            <button onclick="exportDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
-              <i class="fas fa-download text-emerald-400 w-4"></i> Exportar Copia de Seguridad (JSON)
-            </button>
-            <button onclick="importDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
-              <i class="fas fa-upload text-amber-400 w-4"></i> Restaurar Respaldo
-            </button>
-            <input type="file" id="importFileInput" accept=".json" class="hidden">
           </div>
         </div>
 
+        <!-- Recordar sesión -->
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+            <input type="checkbox" id="rememberMeCheckbox" class="rounded bg-slate-950 border-slate-700 text-sky-500 focus:ring-0">
+            <span>Recordar sesión en este equipo</span>
+          </label>
+        </div>
+
+        <!-- Botón de Entrada -->
+        <button 
+          type="submit" 
+          class="w-full py-3 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-sky-500/25 transition flex items-center justify-center gap-2 mt-2"
+        >
+          <i class="fas fa-right-to-bracket"></i>
+          <span>Ingresar al Sistema</span>
+        </button>
+      </form>
+
+      <!-- Aviso de Seguridad / Acceso Restringido -->
+      <div class="mt-6 pt-4 border-t border-slate-800 text-center">
+        <p class="text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
+          <i class="fas fa-shield-halved text-sky-400"></i> Acceso restringido exclusivamente para personal autorizado de GlitchLab.
+        </p>
       </div>
+
     </div>
-  </header>
+  </div>
 
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <!-- ========================================== -->
+  <!-- APLICACIÓN PRINCIPAL (PROTEGIDA)           -->
+  <!-- ========================================== -->
+  <div id="mainApp" class="hidden flex-1 flex flex-col">
+    
+    <!-- Top Navigation Bar con el Logo Idéntico a glitchlab.mx -->
+    <header class="bg-[#0f172a]/95 backdrop-blur sticky top-0 z-30 border-b border-slate-800 shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+        
+        <!-- Brand Logo con Pulso Electrocardiograma de glitchlab.mx -->
+        <div class="flex items-center gap-3">
+          <a href="#" class="flex flex-col items-center justify-center select-none w-fit group">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-microchip text-sky-400 text-3xl group-hover:scale-105 transition-transform flex-shrink-0"></i>
+              <span class="font-bold text-2xl tracking-wider whitespace-nowrap text-white">Glitch<span class="text-sky-400">Lab</span></span>
+            </div>
+            <!-- Pulso Electrocardiograma Animado -->
+            <div class="logo-ecg-container">
+              <svg class="logo-ecg-svg" viewBox="0 0 200 20" preserveAspectRatio="none">
+                <path d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="rgba(14, 165, 233, 0.25)" stroke-width="1.3" pathLength="230"></path>
+                <path class="logo-ecg-pulse" d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="230"></path>
+                <circle class="logo-ecg-spark" cx="104" cy="1.5" r="2" fill="#ffffff"></circle>
+              </svg>
+            </div>
+          </a>
 
-    <!-- KPI Dashboard Metrics -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      
-      <!-- Total Órdenes -->
-      <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-        <div class="h-12 w-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
-          <i class="fas fa-layer-group"></i>
+          <div class="hidden sm:block pl-3 border-l border-slate-700/80">
+            <span class="text-xs font-bold text-sky-400 uppercase tracking-wider block">Especialistas en Microelectrónica</span>
+            <span class="text-[11px] text-slate-400">Sistema de Órdenes & Bitácora</span>
+          </div>
         </div>
-        <div>
-          <p class="text-xs text-slate-400 font-medium">Total de Órdenes</p>
-          <p id="metricTotalOrders" class="text-2xl font-black text-white">0</p>
+
+        <!-- Quick Search Bar -->
+        <div class="flex-1 max-w-md min-w-[240px]">
+          <div class="relative">
+            <i class="fas fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Buscar por Folio, Cliente, Teléfono, Serie o Marca..." 
+              class="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+            >
+          </div>
+        </div>
+
+        <!-- Header Actions: Nueva Orden, Ajustes, Usuario y Logout -->
+        <div class="flex items-center gap-2">
+          <button 
+            id="btnNewOrder" 
+            class="px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-sky-500/25 transition flex items-center gap-2"
+          >
+            <i class="fas fa-plus"></i>
+            <span>Nueva Orden</span>
+          </button>
+
+          <!-- Dropdown Herramientas / Ajustes -->
+          <div class="relative group">
+            <button class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition" title="Opciones y Respaldos">
+              <i class="fas fa-sliders"></i>
+            </button>
+            
+            <div class="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 hidden group-hover:block hover:block z-40">
+              <button onclick="openShopSettingsModal()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <i class="fas fa-users-gear text-sky-400 w-4"></i> Usuarios & Ajustes del Taller
+              </button>
+              <div class="border-t border-slate-800 my-1"></div>
+              <button onclick="exportDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <i class="fas fa-download text-emerald-400 w-4"></i> Exportar Respaldo Completo (JSON)
+              </button>
+              <button onclick="importDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+                <i class="fas fa-upload text-amber-400 w-4"></i> Restaurar Respaldo
+              </button>
+              <input type="file" id="importFileInput" accept=".json" class="hidden">
+            </div>
+          </div>
+
+          <!-- Perfil de Usuario y Botón Cerrar Sesión -->
+          <div class="flex items-center gap-2 pl-2 border-l border-slate-800">
+            <div class="hidden sm:flex flex-col items-end px-3 py-1 bg-slate-900 rounded-xl border border-slate-800">
+              <div class="flex items-center gap-1.5 text-xs font-bold text-white">
+                <i class="fas fa-user-circle text-sky-400"></i>
+                <span id="navUserBadge">Admin</span>
+              </div>
+              <span id="navUserRole" class="text-[10px] text-sky-300/80 font-medium">Administrador</span>
+            </div>
+
+            <button 
+              id="btnLogout" 
+              class="p-2.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 rounded-xl border border-red-800/50 transition" 
+              title="Cerrar Sesión"
+            >
+              <i class="fas fa-power-off"></i>
+            </button>
+          </div>
+
         </div>
       </div>
+    </header>
 
-      <!-- Equipos en Taller -->
-      <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-        <div class="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
-          <i class="fas fa-screwdriver-wrench"></i>
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+      <!-- KPI Dashboard Metrics -->
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        
+        <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+          <div class="h-12 w-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
+            <i class="fas fa-layer-group"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Total de Órdenes</p>
+            <p id="metricTotalOrders" class="text-2xl font-black text-white">0</p>
+          </div>
         </div>
-        <div>
-          <p class="text-xs text-slate-400 font-medium">En Laboratorio</p>
-          <p id="metricInShop" class="text-2xl font-black text-amber-400">0</p>
+
+        <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+          <div class="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+            <i class="fas fa-screwdriver-wrench"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">En Laboratorio</p>
+            <p id="metricInShop" class="text-2xl font-black text-amber-400">0</p>
+          </div>
         </div>
+
+        <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+          <div class="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+            <i class="fas fa-circle-check"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Listos para Entrega</p>
+            <p id="metricReady" class="text-2xl font-black text-emerald-400">0</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+          <div class="h-12 w-12 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl">
+            <i class="fas fa-hand-holding-dollar"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">Saldos Pendientes</p>
+            <p id="metricPendingBalance" class="text-2xl font-black text-sky-400">$0</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Filter Pills Section -->
+      <section class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <button class="filter-pill active px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-500 text-white transition flex items-center gap-2 whitespace-nowrap" data-status="all">
+          <i class="fas fa-list"></i> Todos
+          <span id="count-all" class="px-1.5 py-0.2 rounded-full bg-black/30 text-[10px]">0</span>
+        </button>
+
+        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="received">
+          <i class="fas fa-inbox text-blue-400"></i> Recibidos
+          <span id="count-received" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        </button>
+
+        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="diagnostic">
+          <i class="fas fa-microchip text-amber-400"></i> En Diagnóstico
+          <span id="count-diagnostic" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        </button>
+
+        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="in_progress">
+          <i class="fas fa-screwdriver-wrench text-sky-400"></i> En Reparación
+          <span id="count-in_progress" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        </button>
+
+        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="waiting_parts">
+          <i class="fas fa-clock text-orange-400"></i> Espera Repuesto
+          <span id="count-waiting_parts" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        </button>
+
+        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="ready">
+          <i class="fas fa-circle-check text-emerald-400"></i> Listos
+          <span id="count-ready" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        </button>
+
+        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="delivered">
+          <i class="fas fa-handshake text-slate-400"></i> Entregados
+          <span id="count-delivered" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        </button>
+
+        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="cancelled">
+          <i class="fas fa-ban text-red-400"></i> Cancelados
+          <span id="count-cancelled" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        </button>
+      </section>
+
+      <!-- Orders Cards Grid -->
+      <section id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Generado por app.js -->
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 bg-slate-950/60">
+      <div class="flex items-center justify-center gap-2 mb-1">
+        <i class="fas fa-microchip text-sky-400"></i>
+        <span class="font-bold text-slate-300">GlitchLab</span>
+        <span>• Especialistas en Microelectrónica & Reparación de Laptops</span>
       </div>
+      <p>Calle Uruapan #2, Villas de la Paz, 63198 Tepic, Nay. | Tel: +52 311 339 6969</p>
+    </footer>
 
-      <!-- Listos para Entrega -->
-      <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-        <div class="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
-          <i class="fas fa-circle-check"></i>
-        </div>
-        <div>
-          <p class="text-xs text-slate-400 font-medium">Listos para Entrega</p>
-          <p id="metricReady" class="text-2xl font-black text-emerald-400">0</p>
-        </div>
-      </div>
+  </div>
 
-      <!-- Saldos por Cobrar -->
-      <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-        <div class="h-12 w-12 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl">
-          <i class="fas fa-hand-holding-dollar"></i>
-        </div>
-        <div>
-          <p class="text-xs text-slate-400 font-medium">Saldos Pendientes</p>
-          <p id="metricPendingBalance" class="text-2xl font-black text-sky-400">$0</p>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- Filter Pills Section -->
-    <section class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-      <button class="filter-pill active px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-500 text-white transition flex items-center gap-2 whitespace-nowrap" data-status="all">
-        <i class="fas fa-list"></i> Todos
-        <span id="count-all" class="px-1.5 py-0.2 rounded-full bg-black/30 text-[10px]">0</span>
-      </button>
-
-      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="received">
-        <i class="fas fa-inbox text-blue-400"></i> Recibidos
-        <span id="count-received" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
-      </button>
-
-      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="diagnostic">
-        <i class="fas fa-microchip text-amber-400"></i> En Diagnóstico
-        <span id="count-diagnostic" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
-      </button>
-
-      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="in_progress">
-        <i class="fas fa-screwdriver-wrench text-sky-400"></i> En Reparación
-        <span id="count-in_progress" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
-      </button>
-
-      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="waiting_parts">
-        <i class="fas fa-clock text-orange-400"></i> Espera Repuesto
-        <span id="count-waiting_parts" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
-      </button>
-
-      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="ready">
-        <i class="fas fa-circle-check text-emerald-400"></i> Listos
-        <span id="count-ready" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
-      </button>
-
-      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="delivered">
-        <i class="fas fa-handshake text-slate-400"></i> Entregados
-        <span id="count-delivered" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
-      </button>
-
-      <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="cancelled">
-        <i class="fas fa-ban text-red-400"></i> Cancelados
-        <span id="count-cancelled" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
-      </button>
-    </section>
-
-    <!-- Orders Cards Grid -->
-    <section id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      <!-- Se puebla dinámicamente mediante app.js -->
-    </section>
-
-  </main>
-
-  <!-- MODAL: Crear / Editar Orden de Servicio -->
+  <!-- ========================================== -->
+  <!-- MODAL: Crear / Editar Orden de Servicio    -->
+  <!-- ========================================== -->
   <div id="orderModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl my-auto">
       
@@ -437,7 +566,7 @@
             </div>
             <div class="sm:col-span-2">
               <label class="block text-xs font-medium text-slate-300 mb-1">Técnico Asignado</label>
-              <input type="text" id="technicianName" value="Ing. Especialista" placeholder="Nombre del técnico responsable" class="w-full sm:w-1/2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
+              <input type="text" id="technicianName" value="Ing. Rivera" placeholder="Nombre del técnico responsable" class="w-full sm:w-1/2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none">
             </div>
           </div>
         </div>
@@ -510,7 +639,9 @@
     </div>
   </div>
 
-  <!-- MODAL: BITÁCORA TÉCNICA & FOTOS DEL PROCESO (NUEVO) -->
+  <!-- ========================================== -->
+  <!-- MODAL: BITÁCORA TÉCNICA & FOTOS DEL PROCESO -->
+  <!-- ========================================== -->
   <div id="bitacoraModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl max-h-[94vh] flex flex-col shadow-2xl my-auto">
       
@@ -536,10 +667,10 @@
         </button>
       </div>
 
-      <!-- Bitacora Body: Grid con 2 columnas (Fotos a la izquierda / Timeline y Registro a la derecha) -->
+      <!-- Bitacora Body -->
       <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-slate-950/30">
         
-        <!-- Columna Izquierda: Galería de Fotos y Subida (5 columnas en desktop) -->
+        <!-- Columna Izquierda: Fotos y Subida -->
         <div class="lg:col-span-5 space-y-4">
           
           <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm">
@@ -551,7 +682,6 @@
               <span id="photoCountBadge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-800 text-sky-300 border border-slate-700">0</span>
             </div>
 
-            <!-- Botón para subir fotos / tomar con cámara -->
             <label class="w-full py-3 px-4 border-2 border-dashed border-sky-500/40 hover:border-sky-400 bg-sky-500/5 hover:bg-sky-500/10 rounded-xl cursor-pointer flex flex-col items-center justify-center text-center transition group">
               <i class="fas fa-cloud-arrow-up text-2xl text-sky-400 group-hover:scale-110 transition mb-1"></i>
               <span class="text-xs font-bold text-slate-200 group-hover:text-white">Subir Fotos / Tomar con Cámara</span>
@@ -560,7 +690,7 @@
             </label>
           </div>
 
-          <!-- Galería Grid de Fotos -->
+          <!-- Galería Grid -->
           <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4">
             <h5 class="text-xs font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
               <i class="fas fa-images text-sky-400 text-[11px]"></i> Fotos Registradas:
@@ -572,10 +702,9 @@
 
         </div>
 
-        <!-- Columna Derecha: Registrar Avance & Línea de Tiempo (7 columnas en desktop) -->
+        <!-- Columna Derecha: Registrar Avance & Línea de Tiempo -->
         <div class="lg:col-span-7 space-y-6">
           
-          <!-- Formulario: Registrar nuevo avance -->
           <form id="bitacoraForm" class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm space-y-3">
             <div class="flex items-center gap-2">
               <i class="fas fa-pen-nib text-sky-400"></i>
@@ -624,7 +753,7 @@
                 <input 
                   type="text" 
                   id="bitacoraTechnician" 
-                  value="Ing. Especialista" 
+                  value="Ing. Rivera" 
                   placeholder="Técnico a cargo" 
                   class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-300 focus:outline-none"
                 >
@@ -638,7 +767,6 @@
             </div>
           </form>
 
-          <!-- Timeline de Procedimientos -->
           <div>
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
               <i class="fas fa-clock-rotate-left text-sky-400"></i> Historial de Procedimientos Realizados
@@ -713,69 +841,129 @@
     </div>
   </div>
 
-  <!-- MODAL: Configuración del Taller GlitchLab -->
+  <!-- MODAL: Configuración del Taller GlitchLab & Gestión de Usuarios -->
   <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl my-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl my-auto max-h-[92vh] flex flex-col">
       
       <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50 rounded-t-2xl">
         <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fas fa-store text-sky-400"></i> Configuración de GlitchLab
+          <i class="fas fa-users-gear text-sky-400"></i> Ajustes del Taller & Usuarios
         </h3>
         <button onclick="closeShopSettingsModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
           <i class="fas fa-xmark"></i>
         </button>
       </div>
 
-      <form onsubmit="handleSaveShopSettings(event)" class="p-6 space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Comercial</label>
-          <input type="text" id="cfgShopName" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Eslogan / Especialidad</label>
-          <input type="text" id="cfgShopSlogan" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Teléfono / WhatsApp</label>
-            <input type="text" id="cfgShopPhone" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+      <div class="p-6 space-y-6 overflow-y-auto flex-1">
+        
+        <!-- SECCIÓN 1: GESTIÓN DE USUARIOS Y PERSONAL (NUEVO) -->
+        <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-users text-sky-400"></i>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-white">Personal & Usuarios Registrados</h4>
+            </div>
+            <span class="text-[11px] text-slate-400">Acceso individual con roles</span>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Correo Electrónico</label>
-            <input type="email" id="cfgShopEmail" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+
+          <!-- Tabla de Usuarios Existentes -->
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-900 text-slate-400 text-[11px] uppercase border-b border-slate-800">
+                  <th class="py-2 px-3">Nombre & Usuario</th>
+                  <th class="py-2 px-3">Rol</th>
+                  <th class="py-2 px-3">Clave</th>
+                  <th class="py-2 px-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="usersListTableBody">
+                <!-- Generado por renderUsersList() -->
+              </tbody>
+            </table>
           </div>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Dirección del Laboratorio</label>
-          <input type="text" id="cfgShopAddress" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Términos y Condiciones (Impresos al pie del comprobante)</label>
-          <textarea id="cfgShopTerms" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 focus:outline-none"></textarea>
+
+          <!-- Formulario: Agregar Nuevo Usuario -->
+          <form id="newUserForm" class="pt-3 border-t border-slate-800 space-y-3">
+            <p class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <i class="fas fa-user-plus text-sky-400"></i> Registrar Nuevo Empleado / Técnico:
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Nombre Completo *</label>
+                <input type="text" id="newUserName" placeholder="Ej: Ing. Laura Gómez" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" required>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Nombre de Usuario (Login) *</label>
+                <input type="text" id="newUserUsername" placeholder="Ej: laura" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" required>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Contraseña de Acceso *</label>
+                <input type="password" id="newUserPassword" placeholder="Mínimo 4 caracteres" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" required>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Rol / Permisos *</label>
+                <select id="newUserRole" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none">
+                  <option value="technician">🔧 Técnico Especialista (Diagnóstico & Reparación)</option>
+                  <option value="reception">📋 Recepción (Recepción & Cobro en Mostrador)</option>
+                  <option value="admin">👑 Administrador (Acceso Total)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="flex justify-end pt-1">
+              <button type="submit" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white flex items-center gap-1.5 shadow">
+                <i class="fas fa-plus"></i> Guardar Usuario
+              </button>
+            </div>
+          </form>
         </div>
 
-        <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
-          <button type="button" onclick="closeShopSettingsModal()" class="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-700 text-slate-300 hover:bg-slate-800">
-            Cancelar
-          </button>
-          <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white">
-            Guardar Cambios
-          </button>
-        </div>
-      </form>
+        <!-- SECCIÓN 2: DATOS DEL TALLER Y TÉRMINOS -->
+        <form onsubmit="handleSaveShopSettings(event)" class="space-y-4 pt-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-2">
+            <i class="fas fa-store"></i> Información Comercial de GlitchLab
+          </h4>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Comercial</label>
+            <input type="text" id="cfgShopName" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Eslogan / Especialidad</label>
+            <input type="text" id="cfgShopSlogan" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Teléfono / WhatsApp</label>
+              <input type="text" id="cfgShopPhone" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Correo Electrónico</label>
+              <input type="email" id="cfgShopEmail" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Dirección del Laboratorio</label>
+            <input type="text" id="cfgShopAddress" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Términos y Condiciones (Impresos al pie del comprobante)</label>
+            <textarea id="cfgShopTerms" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 focus:outline-none"></textarea>
+          </div>
+
+          <div class="flex justify-end">
+            <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white">
+              Guardar Datos del Taller
+            </button>
+          </div>
+        </form>
+
+      </div>
 
     </div>
   </div>
-
-  <!-- Footer -->
-  <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 bg-slate-950/60">
-    <div class="flex items-center justify-center gap-2 mb-1">
-      <i class="fas fa-microchip text-sky-400"></i>
-      <span class="font-bold text-slate-300">GlitchLab</span>
-      <span>• Especialistas en Microelectrónica & Reparación de Laptops</span>
-    </div>
-    <p>Calle Uruapan #2, Villas de la Paz, 63198 Tepic, Nay. | Tel: +52 311 339 6969</p>
-  </footer>
 
   <!-- Lógica Principal -->
   <script src="app.js"></script>
