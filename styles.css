@@ -33,8 +33,8 @@
 /* Pulso Electrocardiograma Debajo del Logo (Exacto al estilo de glitchlab.mx) */
 .logo-ecg-container {
   width: 100%;
-  max-width: 138px;
-  height: 12px;
+  max-width: 165px;
+  height: 15px;
   margin: -2px auto 0 auto;
   overflow: visible;
   pointer-events: none;
@@ -44,7 +44,7 @@
 
 .logo-ecg-svg {
   width: 100%;
-  max-width: 138px;
+  max-width: 165px;
   height: 100%;
   display: block;
 }
@@ -140,8 +140,13 @@
   backdrop-filter: blur(8px);
 }
 
-/* Estilos de Impresión */
+/* Estilos de Impresión Optimizados para Impresora Térmica Aiyin AE-240BT & Formatos */
 @media print {
+  @page {
+    margin: 0 !important;
+    size: auto;
+  }
+
   body * {
     visibility: hidden;
   }
@@ -155,11 +160,13 @@
     left: 0;
     top: 0;
     width: 100%;
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
     display: block !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .no-break {
@@ -171,12 +178,95 @@
     display: none !important;
   }
 
-  /* Modo Ticket Térmico 80mm */
-  body.ticket-thermal-mode #print-area {
-    width: 78mm !important;
-    max-width: 78mm !important;
-    padding: 2mm !important;
-    font-size: 11px !important;
-    line-height: 1.25 !important;
+/* Vista previa en pantalla del Sticker / Etiqueta Aiyin */
+body.ticket-sticker-mode #print-area {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+body.ticket-sticker-mode .aiyin-sticker-box {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Modo Ticket Térmico 80mm */
+body.ticket-thermal-mode #print-area {
+  width: 78mm !important;
+  max-width: 78mm !important;
+  margin: 0 auto !important;
+  padding: 2mm !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+/* Modo Etiqueta Adhesiva / Sticker - Impresora Aiyin AE-240BT (203 DPI) */
+body.ticket-sticker-mode {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+}
+
+body.ticket-sticker-mode #print-area {
+  margin: 0 auto !important;
+  padding: 0.5mm !important;
+  box-sizing: border-box !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+/* Medida 50x30 mm (Compacta para cargadores y tapas) */
+body.ticket-sticker-mode.sticker-size-50x30 #print-area,
+body.ticket-sticker-mode.sticker-size-50x30 #print-area .aiyin-sticker-box {
+  width: 50mm !important;
+  max-width: 50mm !important;
+}
+
+/* Medida 60x40 mm (Estándar Recomendada para Aiyin AE-240BT) */
+body.ticket-sticker-mode.sticker-size-60x40 #print-area,
+body.ticket-sticker-mode.sticker-size-60x40 #print-area .aiyin-sticker-box,
+body.ticket-sticker-mode:not(.sticker-size-50x30):not(.sticker-size-76x50):not(.sticker-size-100x150) #print-area,
+body.ticket-sticker-mode:not(.sticker-size-50x30):not(.sticker-size-76x50):not(.sticker-size-100x150) #print-area .aiyin-sticker-box {
+  width: 60mm !important;
+  max-width: 60mm !important;
+}
+
+/* Medida 76x50 mm (Grande / 3x2 pulgadas) */
+body.ticket-sticker-mode.sticker-size-76x50 #print-area,
+body.ticket-sticker-mode.sticker-size-76x50 #print-area .aiyin-sticker-box {
+  width: 76mm !important;
+  max-width: 76mm !important;
+}
+
+/* Medida 100x150 mm (4x6 pulgadas para Caja / Paquetería) */
+body.ticket-sticker-mode.sticker-size-100x150 #print-area,
+body.ticket-sticker-mode.sticker-size-100x150 #print-area .aiyin-sticker-box {
+  width: 100mm !important;
+  max-width: 100mm !important;
+}
+}
+
+/* Supabase Cloud Pulse Indicators */
+@keyframes sb-pulse-green {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.6;
   }
 }
+
+.sb-pulse-active {
+  animation: sb-pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
