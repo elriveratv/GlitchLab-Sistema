@@ -28,8 +28,8 @@ const AppState = {
     users: []
   },
   supabase: {
-    url: '',
-    anonKey: '',
+    url: 'https://afknnllubatfpmzeryrn.supabase.co',
+    anonKey: 'sb_publishable_I5zi2yxOUUKinRm2BjSiGA_PKH5W9hU',
     bucket: 'order-photos',
     client: null,
     isConnected: false,
@@ -1379,16 +1379,28 @@ function saveOrders() {
 // ==========================================
 
 function loadSupabaseConfig() {
+  const defaultUrl = 'https://afknnllubatfpmzeryrn.supabase.co';
+  const defaultKey = 'sb_publishable_I5zi2yxOUUKinRm2BjSiGA_PKH5W9hU';
+  const defaultBucket = 'order-photos';
+
   const saved = localStorage.getItem('glitchlab_supabase_config');
   if (saved) {
     try {
       const cfg = JSON.parse(saved);
-      AppState.supabase.url = cfg.url || '';
-      AppState.supabase.anonKey = cfg.anonKey || '';
-      AppState.supabase.bucket = cfg.bucket || 'order-photos';
+      AppState.supabase.url = cfg.url || defaultUrl;
+      AppState.supabase.anonKey = cfg.anonKey || defaultKey;
+      AppState.supabase.bucket = cfg.bucket || defaultBucket;
     } catch (e) {
       console.error('Error cargando configuración Supabase:', e);
+      AppState.supabase.url = defaultUrl;
+      AppState.supabase.anonKey = defaultKey;
+      AppState.supabase.bucket = defaultBucket;
     }
+  } else {
+    AppState.supabase.url = defaultUrl;
+    AppState.supabase.anonKey = defaultKey;
+    AppState.supabase.bucket = defaultBucket;
+    saveSupabaseConfig();
   }
 }
 
@@ -1429,14 +1441,27 @@ async function initSupabase(showNotification = false) {
       .select('id', { count: 'exact', head: true });
 
     if (error) {
-      console.warn('Prueba de conexión a Supabase falló:', error.message);
-      AppState.supabase.isConnected = false;
-      updateSupabaseUI(error.message);
-      if (showNotification) {
-        alert(`Error al conectar a Supabase:\n${error.message}\n\nAsegúrate de haber ejecutado el Script SQL en Supabase para crear las tablas 'orders' y 'clients'.`);
+      const isMissingTable = error.code === 'PGRST205' || (error.message && error.message.includes('Could not find the table'));
+      if (isMissingTable) {
+        // La API Key y la URL son 100% válidas en Supabase, sólo falta ejecutar el script SQL
+        AppState.supabase.isConnected = true;
+        AppState.supabase.needsSqlSetup = true;
+        updateSupabaseUI();
+        if (showNotification) {
+          alert('¡Conexión con Supabase verificada con éxito!\n\nLas credenciales son correctas. Para que las órdenes y clientes se guarden en la base de datos, ejecuta el Script SQL (botón "Copiar SQL" en el modal) en el SQL Editor de tu consola de Supabase.');
+        }
+      } else {
+        console.warn('Prueba de conexión a Supabase falló:', error.message);
+        AppState.supabase.isConnected = false;
+        AppState.supabase.needsSqlSetup = false;
+        updateSupabaseUI(error.message);
+        if (showNotification) {
+          alert(`Error al conectar a Supabase:\n${error.message}`);
+        }
       }
     } else {
       AppState.supabase.isConnected = true;
+      AppState.supabase.needsSqlSetup = false;
       AppState.supabase.lastSync = new Date().toLocaleTimeString();
       updateSupabaseUI();
       if (showNotification) {
@@ -1450,6 +1475,7 @@ async function initSupabase(showNotification = false) {
   } catch (err) {
     console.error('Error inicializando Supabase:', err);
     AppState.supabase.isConnected = false;
+    AppState.supabase.needsSqlSetup = false;
     updateSupabaseUI(err.message);
     if (showNotification) {
       alert(`Error al inicializar Supabase: ${err.message}`);
@@ -1473,35 +1499,57 @@ function updateSupabaseUI(errorMessage = null) {
   }
 
   if (AppState.supabase.isConnected) {
-    if (dot) {
-      dot.className = 'absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-400 sb-pulse-active';
+    if (AppState.supabase.needsSqlSetup) {
+      if (dot) {
+        dot.className = 'absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse';
+      }
+      if (btnCloud) {
+        btnCloud.className = 'p-2.5 text-amber-400 hover:text-white hover:bg-slate-800/80 rounded-full transition relative text-base';
+        btnCloud.title = 'Supabase Conectado (Falta ejecutar Script SQL en consola Supabase)';
+      }
+      if (sbCard) {
+        sbCard.className = 'p-4 rounded-2xl border transition flex items-center justify-between bg-amber-950/20 border-amber-800/60';
+      }
+      if (sbIcon) {
+        sbIcon.className = 'w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg';
+        sbIcon.innerHTML = '<i class="fas fa-database"></i>';
+      }
+      if (sbTitle) sbTitle.innerText = 'Conectado a Supabase (Pendiente crear tablas)';
+      if (sbSubtitle) sbSubtitle.innerText = 'Credenciales verificadas con éxito. Ejecuta el Script SQL de abajo en tu consola de Supabase para activar las tablas orders y clients.';
+      if (sbBadge) {
+        sbBadge.className = 'px-3 py-1 rounded-full text-[11px] font-bold bg-amber-950 text-amber-300 border border-amber-700 flex items-center gap-1.5';
+        sbBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Ejecutar SQL';
+      }
+      if (btnDisconnect) btnDisconnect.classList.remove('hidden');
+    } else {
+      if (dot) {
+        dot.className = 'absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-400 sb-pulse-active';
+      }
+      if (btnCloud) {
+        btnCloud.className = 'p-2.5 text-emerald-400 hover:text-white hover:bg-slate-800/80 rounded-full transition relative text-base';
+        btnCloud.title = 'Supabase Cloud Conectado (Sincronización Activa)';
+      }
+      if (sbCard) {
+        sbCard.className = 'p-4 rounded-2xl border transition flex items-center justify-between bg-emerald-950/20 border-emerald-800/60';
+      }
+      if (sbIcon) {
+        sbIcon.className = 'w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg';
+        sbIcon.innerHTML = '<i class="fas fa-cloud-check"></i>';
+      }
+      if (sbTitle) sbTitle.innerText = 'Conectado a Supabase Cloud';
+      if (sbSubtitle) sbSubtitle.innerText = `Proyecto: ${AppState.supabase.url} • Órdenes, clientes y fotos sincronizados.`;
+      if (sbBadge) {
+        sbBadge.className = 'px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 flex items-center gap-1.5';
+        sbBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Activo';
+      }
+      if (btnDisconnect) btnDisconnect.classList.remove('hidden');
     }
-    if (btnCloud) {
-      btnCloud.classList.add('text-emerald-400');
-      btnCloud.classList.remove('text-slate-400', 'text-red-400');
-      btnCloud.title = 'Supabase Cloud Conectado (Sincronización Activa)';
-    }
-    if (sbCard) {
-      sbCard.className = 'p-4 rounded-2xl border transition flex items-center justify-between bg-emerald-950/20 border-emerald-800/60';
-    }
-    if (sbIcon) {
-      sbIcon.className = 'w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg';
-      sbIcon.innerHTML = '<i class="fas fa-cloud-check"></i>';
-    }
-    if (sbTitle) sbTitle.innerText = 'Conectado a Supabase Cloud';
-    if (sbSubtitle) sbSubtitle.innerText = `Proyecto: ${AppState.supabase.url} • Órdenes, clientes y fotos sincronizados.`;
-    if (sbBadge) {
-      sbBadge.className = 'px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 flex items-center gap-1.5';
-      sbBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Activo';
-    }
-    if (btnDisconnect) btnDisconnect.classList.remove('hidden');
   } else if (errorMessage) {
     if (dot) {
       dot.className = 'absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-red-500';
     }
     if (btnCloud) {
-      btnCloud.classList.add('text-red-400');
-      btnCloud.classList.remove('text-slate-400', 'text-emerald-400');
+      btnCloud.className = 'p-2.5 text-red-400 hover:text-white hover:bg-slate-800/80 rounded-full transition relative text-base';
       btnCloud.title = 'Error de Conexión a Supabase Cloud';
     }
     if (sbCard) {
