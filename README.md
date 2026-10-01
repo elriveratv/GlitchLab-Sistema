@@ -30,25 +30,32 @@ No requiere instalar Node.js ni Python. Solo necesitas abrir el archivo `index.h
 
 ## ⚡ Características Principales
 
-### 1. 📋 Órdenes de Servicio Especializadas
-- **Folio Único Automático**: Formato secuencial oficial (ej. `GL-2026-0001`).
-- **Datos del Cliente**: Nombre, teléfono con enlace directo a WhatsApp y llamada, correo y dirección.
-- **Datos del Equipo**: Tipo (Laptop, PC, Tarjeta Madre/Motherboard, Consola, Celular, etc.), marca, modelo y serie/IMEI.
-- **🔐 Seguridad del Dispositivo**: Apartado para guardar contraseña alfanumérica, PIN numérico o patrón de desbloqueo, con botón para ocultar/mostrar.
-- **🧰 Checklist de Recepción & Estado Físico**: Cargador original, cables, batería, golpes, fisuras, humedad previa, etc.
-- **✍️ Firma Digital del Cliente**: Pad táctil interactivo en pantalla donde el cliente firma de conformidad.
+### 1. 🔢 Secuencia de Órdenes Puramente Numérica
+- **Folio Numérico Consecutivo**: Formato limpio y profesional (`#1001`, `#1002`, `#1003`...).
 
-### 2. 📝 Bitácora Técnica de Procesos & 📸 Evidencia Fotográfica
-- **Historial Cronológico de Procedimientos**: Registra paso a paso cada avance técnico (mediciones de voltajes en bobinas, detección de cortos con cámara térmica, reemplazo de integrados/MOSFETs, reprogramación de BIOS, pruebas de estrés).
-- **Subida de Fotos**: Carga fotos directamente desde el equipo o con la cámara de tu celular/tablet. Las imágenes se optimizan y comprimen automáticamente sin saturar la memoria.
-- **Visor Lightbox en Alta Resolución**: Inspecciona fotos de microscopio y placas a pantalla completa.
-- **💬 Compartir Avance por WhatsApp**: Notifica al cliente de un avance específico en 1 clic.
+### 2. 🎨 Diseño Minimalista Dark SaaS
+- **Navegación por Pestañas Pill**: Accesos directos a *Servicios*, *Finanzas*, *Inventario* y *Garantías*.
+- **Selector de Vista**: Alterna entre vista de **Tarjetas en Cuadrícula** (estilo minimalist SaaS con citas de fallas en mayúsculas) y vista de **Lista / Tabla**.
+- **Barra de Búsqueda Rápida**: Busca instantáneamente por número `#1001`, cliente, equipo o falla.
 
-### 3. 🖨️ Impresión Dual de Comprobantes
-- **Hoja Membretada (Carta / A4)**: Con logotipo oficial de GlitchLab, pulso de microelectrónica, desglose financiero, firma del cliente, bitácora de trabajos y términos de garantía.
-- **Ticket Térmico (80mm)**: Formato compacto para impresoras POS de punto de venta.
+### 3. 📄 Generación y Descarga de PDF para el Cliente
+- **Descarga Directa en PDF**: Botón que compila al vuelo un archivo PDF oficial vectorial (`GlitchLab_Comprobante_1001_Cliente.pdf`) con los datos del cliente, equipo, diagnóstico, desglose de costos, firma y código QR de seguimiento.
+- **Impresión Directa**: Compatible con hojas Carta / A4.
 
-### 4. 💾 Respaldos & Configuración
-- Almacenamiento local persistente (`localStorage`).
-- Exportar e importar copias de seguridad en formato `.json`.
-- Configuración de datos de GlitchLab, teléfonos y cláusulas de garantía.
+### 4. 🏷️ Etiqueta / Sticker para Chasis del Equipo
+- Formato especial para impresoras térmicas adhesivas de **50mm a 60mm**:
+  1. **Número de Orden** (destacado en grande y legible)
+  2. **Modelo del Equipo** (marca y modelo completo)
+  3. **Falla Reportada**
+  4. **Si Incluye Accesorios** (*INCLUYE ACCESORIOS: Cargador original, Funda* o *INCLUYE ACCESORIOS: Ninguno*)
+  - Incluye además nombre, teléfono y código QR para rastreo inmediato.
+
+### 5. 🔍 Portal de Seguimiento para Clientes
+- Los clientes pueden escanear el QR de su etiqueta o comprobante para ver en vivo el estatus, fotos de la reparación y bitácora técnica sin necesidad de ingresar al sistema administrativo.
+
+### 6. 💬 Plantillas Rápidas de WhatsApp
+- 5 mensajes preconfigurados (Recepción, Presupuesto listo, Avance técnico, Equipo listo y Garantía/Reseña en Google).
+
+### 7. 📦 Inventario & 💵 Corte de Caja (Excel)
+- Control de refacciones (MOSFETs, ICs de carga, pastas térmicas, pantallas) con alerta de stock mínimo.
+- Reporte financiero diario/mensual y exportación completa a Excel (.CSV).
