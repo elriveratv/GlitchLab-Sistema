@@ -1468,9 +1468,29 @@ async function initSupabase(showNotification = false) {
         showToast('¡Conectado a Supabase Cloud exitosamente!');
       }
 
-      // Sincronizar automáticamente en segundo plano órdenes y clientes
-      fetchOrdersFromSupabase(true);
-      fetchClientsFromSupabase(true);
+      // Sincronización automática completa de inicio
+      autoSyncAll(true);
+
+      // Registrar sincronización automática periódica en segundo plano (cada 30 segundos)
+      if (!window._supabaseSyncTimer) {
+        window._supabaseSyncTimer = setInterval(() => {
+          if (AppState.supabase.isConnected && !AppState.supabase.needsSqlSetup) {
+            autoSyncAll(true);
+          }
+        }, 30000);
+
+        window.addEventListener('focus', () => {
+          if (AppState.supabase.isConnected && !AppState.supabase.needsSqlSetup) {
+            autoSyncAll(true);
+          }
+        });
+
+        window.addEventListener('online', () => {
+          if (AppState.supabase.isConnected && !AppState.supabase.needsSqlSetup) {
+            autoSyncAll(true);
+          }
+        });
+      }
     }
   } catch (err) {
     console.error('Error inicializando Supabase:', err);
@@ -1899,50 +1919,89 @@ async function fetchOrdersFromSupabase(isAuto = false) {
   }
 }
 
+async function autoSyncAll(isSilent = true) {
+  if (!AppState.supabase.client || !AppState.supabase.isConnected || AppState.supabase.needsSqlSetup) return;
+
+  try {
+    // 1. Subir Clientes Locales a Supabase
+    if (AppState.clients && AppState.clients.length > 0) {
+      const clientsPayload = AppState.clients.map(c => ({
+        id: c.id || ('cli_' + (c.phone || '').replace(/\D/g, '')),
+        name: c.name,
+        phone: c.phone,
+        email: c.email || null,
+        address: c.address || null,
+        total_orders: c.totalOrders || 1,
+        notes: c.notes || null,
+        updated_at: new Date().toISOString()
+      }));
+      await AppState.supabase.client.from('clients').upsert(clientsPayload, { onConflict: 'id' });
+    }
+
+    // 2. Traer Clientes de Supabase y fusionar
+    const { data: remoteClients, error: cliErr } = await AppState.supabase.client.from('clients').select('*');
+    if (!cliErr && Array.isArray(remoteClients) && remoteClients.length > 0) {
+      const clientMap = new Map();
+      AppState.clients.forEach(c => clientMap.set(c.id || c.phone, c));
+      remoteClients.forEach(r => clientMap.set(r.id || r.phone, {
+        id: r.id,
+        name: r.name,
+        phone: r.phone,
+        email: r.email || '',
+        address: r.address || '',
+        totalOrders: r.total_orders || 1,
+        notes: r.notes || '',
+        updatedAt: r.updated_at || new Date().toISOString()
+      }));
+      AppState.clients = Array.from(clientMap.values());
+      saveClients();
+      renderClientsTable();
+    }
+
+    // 3. Subir Órdenes Locales a Supabase
+    if (AppState.orders && AppState.orders.length > 0) {
+      const ordersPayload = AppState.orders.map(mapLocalOrderToSupabase);
+      await AppState.supabase.client.from('orders').upsert(ordersPayload, { onConflict: 'id' });
+    }
+
+    // 4. Traer Órdenes de Supabase y fusionar
+    const { data: remoteOrders, error: ordErr } = await AppState.supabase.client.from('orders').select('*').order('id', { ascending: false });
+    if (!ordErr && Array.isArray(remoteOrders)) {
+      const dbOrders = remoteOrders.map(mapSupabaseOrderToLocal);
+      const orderMap = new Map();
+      dbOrders.forEach(o => orderMap.set(o.id.toString(), o));
+      AppState.orders.forEach(o => {
+        if (!orderMap.has(o.id.toString())) {
+          orderMap.set(o.id.toString(), o);
+        }
+      });
+
+      AppState.orders = Array.from(orderMap.values()).sort((a, b) => {
+        const numA = parseInt(a.id.toString().replace(/\D/g, '') || 0, 10);
+        const numB = parseInt(b.id.toString().replace(/\D/g, '') || 0, 10);
+        return numB - numA;
+      });
+
+      localStorage.setItem('glitchlab_orders', JSON.stringify(AppState.orders));
+      renderDashboard();
+      renderOrders();
+    }
+
+    AppState.supabase.lastSync = new Date().toLocaleTimeString();
+    updateSupabaseUI();
+    if (!isSilent) showToast('¡Todo sincronizado con Supabase Cloud!');
+  } catch (err) {
+    console.warn('Error en autoSyncAll:', err);
+    if (!isSilent) alert('Error sincronizando con Supabase: ' + err.message);
+  }
+}
+
 async function pushAllToSupabase(isSilent = false) {
   if (!AppState.supabase.client) {
     if (!isSilent) alert('Conecta primero tu proyecto Supabase.');
     return;
   }
-
-  try {
-    if (!isSilent) showToast('Subiendo órdenes y clientes a Supabase...');
-    
-    // 1. Subir Clientes
-    const clientsPayload = (AppState.clients || []).map(c => ({
-      id: c.id || ('cli_' + (c.phone || '').replace(/\D/g, '')),
-      name: c.name,
-      phone: c.phone,
-      email: c.email || null,
-      address: c.address || null,
-      total_orders: c.totalOrders || 1,
-      notes: c.notes || null,
-      updated_at: new Date().toISOString()
-    }));
-
-    if (clientsPayload.length > 0) {
-      await AppState.supabase.client
-        .from('clients')
-        .upsert(clientsPayload, { onConflict: 'id' });
-    }
-
-    // 2. Subir Órdenes
-    const ordersPayload = AppState.orders.map(mapLocalOrderToSupabase);
-    if (ordersPayload.length > 0) {
-      const { error } = await AppState.supabase.client
-        .from('orders')
-        .upsert(ordersPayload, { onConflict: 'id' });
-
-      if (error) throw error;
-    }
-
-    AppState.supabase.lastSync = new Date().toLocaleTimeString();
-    updateSupabaseUI();
-    if (!isSilent) showToast(`¡${ordersPayload.length} órdenes y ${clientsPayload.length} clientes subidos a Supabase Cloud!`);
-  } catch (err) {
-    console.error('Error al subir a Supabase:', err);
-    if (!isSilent) alert('Error al subir a Supabase: ' + err.message);
-  }
+  await autoSyncAll(isSilent);
 }
 
 async function pullAllFromSupabase() {
@@ -1950,9 +2009,8 @@ async function pullAllFromSupabase() {
     alert('Conecta primero tu proyecto Supabase.');
     return;
   }
-  showToast('Descargando datos de la nube...');
-  await fetchClientsFromSupabase(false);
-  await fetchOrdersFromSupabase(false);
+  showToast('Sincronizando con la nube...');
+  await autoSyncAll(false);
 }
 
 // Demo data con identificadores iniciando desde 1
