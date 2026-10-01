@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GlitchLab • Sistema de Órdenes y Bitácora de Microelectrónica</title>
+  <title>GlitchLab • Sistema de Órdenes, Bitácora & Laboratorio de Microelectrónica</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,6 +25,15 @@
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
+  <!-- Generador de Códigos QR Dinámico -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- html2pdf.js para descarga instantánea de comprobantes PDF para clientes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <!-- Estilos Custom, ECG de glitchlab.mx y Print -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -55,6 +64,25 @@
 
         <p class="text-xs uppercase tracking-widest font-semibold text-slate-400 mt-3">Especialistas en Microelectrónica</p>
         <p class="text-[11px] text-sky-400 font-medium">Portal de Acceso al Laboratorio</p>
+      </div>
+
+      <!-- Botón especial para Clientes: Rastrear mi equipo -->
+      <div class="mb-5">
+        <button 
+          type="button" 
+          id="btnOpenTracking" 
+          class="w-full py-2.5 px-4 bg-sky-950/60 hover:bg-sky-900/60 border border-sky-500/40 hover:border-sky-400 text-sky-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow"
+        >
+          <i class="fas fa-qrcode text-sky-400"></i>
+          <span>¿Eres Cliente? Rastrea el estado de tu equipo aquí</span>
+        </button>
+      </div>
+
+      <!-- Separador visual -->
+      <div class="relative flex items-center justify-center mb-5">
+        <div class="border-t border-slate-800 w-full"></div>
+        <span class="bg-slate-900 px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider">Acceso de Personal</span>
+        <div class="border-t border-slate-800 w-full"></div>
       </div>
 
       <!-- Mensaje de Error en Login -->
@@ -116,10 +144,10 @@
         </button>
       </form>
 
-      <!-- Aviso de Seguridad / Acceso Restringido -->
+      <!-- Aviso de Seguridad -->
       <div class="mt-6 pt-4 border-t border-slate-800 text-center">
         <p class="text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
-          <i class="fas fa-shield-halved text-sky-400"></i> Acceso restringido exclusivamente para personal autorizado de GlitchLab.
+          <i class="fas fa-shield-halved text-sky-400"></i> Acceso restringido exclusivamente para personal de GlitchLab.
         </p>
       </div>
 
@@ -131,90 +159,110 @@
   <!-- ========================================== -->
   <div id="mainApp" class="hidden flex-1 flex flex-col">
     
-    <!-- Top Navigation Bar con el Logo Idéntico a glitchlab.mx -->
-    <header class="bg-[#0f172a]/95 backdrop-blur sticky top-0 z-30 border-b border-slate-800 shadow-lg">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+    <!-- Top Navigation Bar con Pestañas Pill Minimalistas -->
+    <header class="bg-[#0b101d]/90 backdrop-blur-md sticky top-0 z-30 border-b border-slate-800/80">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex items-center justify-between gap-5">
         
-        <!-- Brand Logo con Pulso Electrocardiograma de glitchlab.mx -->
+        <!-- Brand Logo con Pulso Electrocardiograma de glitchlab.mx (Tamaño Más Grande) -->
         <div class="flex items-center gap-3">
           <a href="#" class="flex flex-col items-center justify-center select-none w-fit group">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2.5">
               <i class="fas fa-microchip text-sky-400 text-3xl group-hover:scale-105 transition-transform flex-shrink-0"></i>
-              <span class="font-bold text-2xl tracking-wider whitespace-nowrap text-white">Glitch<span class="text-sky-400">Lab</span></span>
+              <span class="font-black text-2xl tracking-wider whitespace-nowrap text-white">Glitch<span class="text-sky-400">Lab</span></span>
             </div>
             <!-- Pulso Electrocardiograma Animado -->
             <div class="logo-ecg-container">
               <svg class="logo-ecg-svg" viewBox="0 0 200 20" preserveAspectRatio="none">
                 <path d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="rgba(14, 165, 233, 0.25)" stroke-width="1.3" pathLength="230"></path>
-                <path class="logo-ecg-pulse" d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="230"></path>
-                <circle class="logo-ecg-spark" cx="104" cy="1.5" r="2" fill="#ffffff"></circle>
+                <path class="logo-ecg-pulse" d="M 0,10 L 55,10 C 62,10 65,7.5 68,7.5 C 71,7.5 74,10 79,10 L 92,10 L 97,13 L 104,1.5 L 111,18.5 L 117,8.5 L 122,10 L 132,10 C 139,10 144,6.5 150,6.5 C 156,6.5 161,10 168,10 L 200,10" fill="none" stroke="#00ffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pathLength="230"></path>
+                <circle class="logo-ecg-spark" cx="104" cy="1.5" r="2.2" fill="#ffffff"></circle>
               </svg>
             </div>
           </a>
-
-          <div class="hidden sm:block pl-3 border-l border-slate-700/80">
-            <span class="text-xs font-bold text-sky-400 uppercase tracking-wider block">Especialistas en Microelectrónica</span>
-            <span class="text-[11px] text-slate-400">Sistema de Órdenes & Bitácora</span>
-          </div>
         </div>
 
-        <!-- Quick Search Bar -->
-        <div class="flex-1 max-w-md min-w-[240px]">
-          <div class="relative">
-            <i class="fas fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-            <input 
-              type="text" 
-              id="searchInput" 
-              placeholder="Buscar por Folio, Cliente, Teléfono, Serie o Marca..." 
-              class="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
-            >
-          </div>
-        </div>
+        <!-- Barra de Navegación Estilo Pill (Más Grande, Cómoda y Legible) -->
+        <nav class="hidden md:flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 p-1.5 rounded-full shadow-inner">
+          <button onclick="switchNavSection('services')" id="navTabServices" class="nav-pill active px-5 py-2 rounded-full bg-white text-slate-900 font-bold text-sm shadow transition flex items-center gap-2">
+            <i class="fas fa-screwdriver-wrench text-sm"></i>
+            <span>Servicios</span>
+          </button>
+          <button onclick="openFinancialReportModal()" id="navTabFinances" class="nav-pill px-5 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-semibold transition flex items-center gap-2">
+            <i class="fas fa-chart-pie text-sm text-emerald-400"></i>
+            <span>Finanzas</span>
+          </button>
+          <button onclick="openInventoryModal()" id="navTabInventory" class="nav-pill px-5 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-semibold transition flex items-center gap-2">
+            <i class="fas fa-boxes-stacked text-sm text-sky-400"></i>
+            <span>Inventario</span>
+          </button>
+          <button onclick="openClientsModal()" id="navTabClients" class="nav-pill px-5 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-semibold transition flex items-center gap-2">
+            <i class="fas fa-address-book text-sm text-purple-400"></i>
+            <span>Clientes</span>
+          </button>
+          <button onclick="filterByWarranty()" id="navTabWarranty" class="nav-pill px-5 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 text-sm font-semibold transition flex items-center gap-2">
+            <i class="fas fa-shield-halved text-sm text-amber-400"></i>
+            <span>Garantías</span>
+          </button>
+        </nav>
 
-        <!-- Header Actions: Nueva Orden, Ajustes, Usuario y Logout -->
-        <div class="flex items-center gap-2">
-          <button 
-            id="btnNewOrder" 
-            class="px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-sky-500/25 transition flex items-center gap-2"
-          >
-            <i class="fas fa-plus"></i>
-            <span>Nueva Orden</span>
+        <!-- Right Header Controls: Supabase, Notificaciones, Ajustes & Perfil -->
+        <div class="flex items-center gap-2.5">
+          
+          <!-- Indicador Supabase Cloud -->
+          <button onclick="openSupabaseSettingsModal()" id="btnSupabaseCloud" class="p-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-full transition relative text-base" title="Supabase Cloud: Base de Datos & Fotos">
+            <i class="fas fa-cloud"></i>
+            <span id="supabaseStatusDot" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-slate-500"></span>
           </button>
 
-          <!-- Dropdown Herramientas / Ajustes -->
+          <!-- Notificación / Campana -->
+          <button onclick="showQuickNotifications()" class="p-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-full transition relative text-base" title="Notificaciones de taller">
+            <i class="far fa-bell"></i>
+            <span id="notifDot" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping"></span>
+            <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+          </button>
+
+          <!-- Ajustes del Taller (Engranaje) -->
           <div class="relative group">
-            <button class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 transition" title="Opciones y Respaldos">
-              <i class="fas fa-sliders"></i>
+            <button class="p-2.5 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-full transition text-base" title="Configuración del Taller">
+              <i class="fas fa-gear"></i>
             </button>
-            
-            <div class="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 hidden group-hover:block hover:block z-40">
-              <button onclick="openShopSettingsModal()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
-                <i class="fas fa-users-gear text-sky-400 w-4"></i> Usuarios & Ajustes del Taller
+            <div class="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 hidden group-hover:block hover:block z-40">
+              <button onclick="openSupabaseSettingsModal()" class="w-full text-left px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2.5">
+                <i class="fas fa-bolt text-emerald-400 w-4"></i> Conexión Supabase Cloud
+              </button>
+              <button onclick="openClientsModal()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2.5">
+                <i class="fas fa-address-book text-purple-400 w-4"></i> Directorio de Clientes
               </button>
               <div class="border-t border-slate-800 my-1"></div>
-              <button onclick="exportDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
-                <i class="fas fa-download text-emerald-400 w-4"></i> Exportar Respaldo Completo (JSON)
+              <button onclick="openShopSettingsModal()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2.5">
+                <i class="fas fa-users-gear text-sky-400 w-4"></i> Personal, Garantías & Ajustes
               </button>
-              <button onclick="importDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2">
+              <button onclick="exportDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2.5">
+                <i class="fas fa-download text-emerald-400 w-4"></i> Exportar Respaldo (JSON)
+              </button>
+              <button onclick="importDataBackup()" class="w-full text-left px-4 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2.5">
                 <i class="fas fa-upload text-amber-400 w-4"></i> Restaurar Respaldo
               </button>
               <input type="file" id="importFileInput" accept=".json" class="hidden">
             </div>
           </div>
 
-          <!-- Perfil de Usuario y Botón Cerrar Sesión -->
-          <div class="flex items-center gap-2 pl-2 border-l border-slate-800">
-            <div class="hidden sm:flex flex-col items-end px-3 py-1 bg-slate-900 rounded-xl border border-slate-800">
-              <div class="flex items-center gap-1.5 text-xs font-bold text-white">
-                <i class="fas fa-user-circle text-sky-400"></i>
-                <span id="navUserBadge">Admin</span>
+          <!-- Perfil de Usuario con Avatar Circular -->
+          <div class="flex items-center gap-2.5 pl-2 border-l border-slate-800">
+            <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 cursor-pointer hover:border-slate-700 transition" onclick="openShopSettingsModal()" title="Usuario Actual">
+              <div id="userAvatarCircle" class="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-500 to-sky-400 text-slate-950 font-black text-xs flex items-center justify-center shadow-sm">
+                RI
               </div>
-              <span id="navUserRole" class="text-[10px] text-sky-300/80 font-medium">Administrador</span>
+              <div class="hidden lg:block text-left pr-1">
+                <div id="navUserBadge" class="text-xs font-bold text-white leading-tight">Admin</div>
+                <div id="navUserRole" class="text-[11px] text-sky-400 font-medium leading-none">Administrador</div>
+              </div>
             </div>
 
+            <!-- Botón Salir -->
             <button 
               id="btnLogout" 
-              class="p-2.5 bg-red-950/40 hover:bg-red-900/60 text-red-300 rounded-xl border border-red-800/50 transition" 
+              class="p-2.5 text-slate-500 hover:text-red-400 hover:bg-red-950/40 rounded-full transition text-sm" 
               title="Cerrar Sesión"
             >
               <i class="fas fa-power-off"></i>
@@ -226,100 +274,187 @@
     </header>
 
     <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
 
-      <!-- KPI Dashboard Metrics -->
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <!-- TOOLBAR PRINCIPAL (Estilo minimalista idéntico a la referencia: Título, Barra de Búsqueda y Botones) -->
+      <section class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pt-1">
         
-        <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-          <div class="h-12 w-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-xl">
+        <!-- Título de la Sección con Contador -->
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Servicios</h1>
+          <span id="badgeTotalCounter" class="px-2.5 py-0.5 rounded-full bg-slate-800/90 border border-slate-700 text-xs font-bold text-sky-400">
+            0
+          </span>
+        </div>
+
+        <!-- Buscador Estilo Pill Redondeado -->
+        <div class="flex-1 max-w-md">
+          <div class="relative">
+            <i class="fas fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Buscar por #1, cliente, equipo, falla..." 
+              class="w-full pl-10 pr-4 py-2 bg-slate-900/90 border border-slate-800 hover:border-slate-700 rounded-full text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition shadow-inner"
+            >
+          </div>
+        </div>
+
+        <!-- Controles de Vista & Acción: Cuadrícula/Lista, Filtro, Refresh, Exportar y + Nueva Orden -->
+        <div class="flex items-center gap-2 self-end md:self-auto">
+          
+          <!-- Selector Cuadrícula / Lista -->
+          <div class="flex items-center bg-slate-900 border border-slate-800 rounded-full p-0.5">
+            <button 
+              id="btnViewGrid" 
+              onclick="setViewMode('grid')" 
+              class="p-2 rounded-full text-white bg-slate-800 transition" 
+              title="Vista en Cuadrícula"
+            >
+              <i class="fas fa-grip text-xs"></i>
+            </button>
+            <button 
+              id="btnViewList" 
+              onclick="setViewMode('list')" 
+              class="p-2 rounded-full text-slate-400 hover:text-white transition" 
+              title="Vista en Lista / Tabla"
+            >
+              <i class="fas fa-list text-xs"></i>
+            </button>
+          </div>
+
+          <!-- Botón Refrescar -->
+          <button onclick="renderDashboard(); renderOrders(); showToast('Datos actualizados')" class="p-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-full transition" title="Refrescar">
+            <i class="fas fa-rotate text-xs"></i>
+          </button>
+
+          <!-- Botón Exportar Todas las Órdenes de Servicio a Excel / CSV -->
+          <button 
+            onclick="exportOrdersToCSV()" 
+            class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 border border-slate-800 hover:border-emerald-500/40 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow whitespace-nowrap" 
+            title="Exportar todas las órdenes de servicio a Excel (.csv)"
+          >
+            <i class="fas fa-file-excel text-xs text-emerald-400"></i>
+            <span>Exportar Órdenes</span>
+          </button>
+
+          <!-- Botón + Nueva Orden (Pill Destacado) -->
+          <button 
+            id="btnNewOrder" 
+            class="px-5 py-2 bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs rounded-full shadow-lg transition flex items-center gap-2 whitespace-nowrap group"
+          >
+            <i class="fas fa-plus text-xs group-hover:rotate-90 transition-transform"></i>
+            <span>Nueva Orden</span>
+          </button>
+
+        </div>
+      </section>
+
+      <!-- KPI Metrics Compactos Minimalistas -->
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1">
+        
+        <div class="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-slate-700 transition" onclick="openFinancialReportModal()">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">Total Órdenes</p>
+            <p id="metricTotalOrders" class="text-xl font-black text-white mt-0.5">0</p>
+          </div>
+          <div class="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm">
             <i class="fas fa-layer-group"></i>
           </div>
-          <div>
-            <p class="text-xs text-slate-400 font-medium">Total de Órdenes</p>
-            <p id="metricTotalOrders" class="text-2xl font-black text-white">0</p>
-          </div>
         </div>
 
-        <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-          <div class="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
+        <div class="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">En Taller</p>
+            <p id="metricInShop" class="text-xl font-black text-amber-400 mt-0.5">0</p>
+          </div>
+          <div class="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm">
             <i class="fas fa-screwdriver-wrench"></i>
           </div>
-          <div>
-            <p class="text-xs text-slate-400 font-medium">En Laboratorio</p>
-            <p id="metricInShop" class="text-2xl font-black text-amber-400">0</p>
-          </div>
         </div>
 
-        <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-          <div class="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+        <div class="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">Listos para Entrega</p>
+            <p id="metricReady" class="text-xl font-black text-emerald-400 mt-0.5">0</p>
+          </div>
+          <div class="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm">
             <i class="fas fa-circle-check"></i>
           </div>
-          <div>
-            <p class="text-xs text-slate-400 font-medium">Listos para Entrega</p>
-            <p id="metricReady" class="text-2xl font-black text-emerald-400">0</p>
-          </div>
         </div>
 
-        <div class="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-          <div class="h-12 w-12 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center text-xl">
+        <div class="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-2xl flex items-center justify-between cursor-pointer hover:border-sky-500/50 transition" onclick="openFinancialReportModal()">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">Saldos por Cobrar</p>
+            <p id="metricPendingBalance" class="text-xl font-black text-sky-400 mt-0.5">$0</p>
+          </div>
+          <div class="h-9 w-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center text-sm">
             <i class="fas fa-hand-holding-dollar"></i>
           </div>
-          <div>
-            <p class="text-xs text-slate-400 font-medium">Saldos Pendientes</p>
-            <p id="metricPendingBalance" class="text-2xl font-black text-sky-400">$0</p>
-          </div>
         </div>
 
       </section>
 
-      <!-- Filter Pills Section -->
-      <section class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        <button class="filter-pill active px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-sky-500 text-white transition flex items-center gap-2 whitespace-nowrap" data-status="all">
-          <i class="fas fa-list"></i> Todos
-          <span id="count-all" class="px-1.5 py-0.2 rounded-full bg-black/30 text-[10px]">0</span>
+      <!-- Filter Pills Minimalistas -->
+      <section class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+        <button class="filter-pill active px-3 py-1 rounded-full text-[11px] font-semibold bg-white text-slate-950 transition flex items-center gap-1.5 whitespace-nowrap shadow-sm" data-status="all">
+          Todos <span id="count-all" class="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-900 text-[10px] font-bold">0</span>
         </button>
 
-        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="received">
-          <i class="fas fa-inbox text-blue-400"></i> Recibidos
-          <span id="count-received" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        <button class="filter-pill px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap" data-status="received">
+          <span class="w-2 h-2 rounded-full bg-blue-400"></span> Recibidos <span id="count-received" class="text-slate-500 text-[10px]">0</span>
         </button>
 
-        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="diagnostic">
-          <i class="fas fa-microchip text-amber-400"></i> En Diagnóstico
-          <span id="count-diagnostic" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        <button class="filter-pill px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap" data-status="diagnostic">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span> Diagnóstico <span id="count-diagnostic" class="text-slate-500 text-[10px]">0</span>
         </button>
 
-        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="in_progress">
-          <i class="fas fa-screwdriver-wrench text-sky-400"></i> En Reparación
-          <span id="count-in_progress" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        <button class="filter-pill px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap" data-status="in_progress">
+          <span class="w-2 h-2 rounded-full bg-sky-400"></span> En Reparación <span id="count-in_progress" class="text-slate-500 text-[10px]">0</span>
         </button>
 
-        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="waiting_parts">
-          <i class="fas fa-clock text-orange-400"></i> Espera Repuesto
-          <span id="count-waiting_parts" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        <button class="filter-pill px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap" data-status="waiting_parts">
+          <span class="w-2 h-2 rounded-full bg-orange-400"></span> Espera Repuesto <span id="count-waiting_parts" class="text-slate-500 text-[10px]">0</span>
         </button>
 
-        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="ready">
-          <i class="fas fa-circle-check text-emerald-400"></i> Listos
-          <span id="count-ready" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        <button class="filter-pill px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap" data-status="ready">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Listos <span id="count-ready" class="text-slate-500 text-[10px]">0</span>
         </button>
 
-        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="delivered">
-          <i class="fas fa-handshake text-slate-400"></i> Entregados
-          <span id="count-delivered" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        <button class="filter-pill px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap" data-status="delivered">
+          <span class="w-2 h-2 rounded-full bg-slate-500"></span> Entregados <span id="count-delivered" class="text-slate-500 text-[10px]">0</span>
         </button>
 
-        <button class="filter-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-2 whitespace-nowrap" data-status="cancelled">
-          <i class="fas fa-ban text-red-400"></i> Cancelados
-          <span id="count-cancelled" class="px-1.5 py-0.2 rounded-full bg-slate-900 text-[10px]">0</span>
+        <button class="filter-pill px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5 whitespace-nowrap" data-status="cancelled">
+          <span class="w-2 h-2 rounded-full bg-red-400"></span> Cancelados <span id="count-cancelled" class="text-slate-500 text-[10px]">0</span>
         </button>
       </section>
 
-      <!-- Orders Cards Grid -->
-      <section id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <!-- Generado por app.js -->
+      <!-- Orders Cards Grid (Vista en Cuadrícula) -->
+      <section id="ordersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Generado dinámicamente por app.js con el estilo minimalista de la referencia -->
       </section>
+
+      <!-- Orders Table View (Vista en Lista Minimalista) -->
+      <section id="ordersListContainer" class="hidden overflow-x-auto bg-slate-900/60 border border-slate-800/80 rounded-2xl shadow-sm">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-950/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+              <th class="py-3 px-4">Orden</th>
+              <th class="py-3 px-4">Fecha</th>
+              <th class="py-3 px-4">Cliente</th>
+              <th class="py-3 px-4">Equipo & Modelo</th>
+              <th class="py-3 px-4">Falla Reportada</th>
+              <th class="py-3 px-4">Estado</th>
+              <th class="py-3 px-4">Presupuesto / Saldo</th>
+              <th class="py-3 px-4 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="ordersListTableBody"></tbody>
+        </table>
+      </section>
+
+    </main>
 
     </main>
 
@@ -336,12 +471,602 @@
   </div>
 
   <!-- ========================================== -->
+  <!-- MODAL: PORTAL DE RASTREO CLIENTES (QR)     -->
+  <!-- ========================================== -->
+  <div id="clientTrackingModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl shadow-2xl my-auto overflow-hidden">
+      
+      <!-- Tracking Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
+        <div class="flex items-center gap-2.5">
+          <i class="fas fa-satellite-dish text-sky-400 text-xl"></i>
+          <div>
+            <h3 class="text-base font-bold text-white">Rastreo de Reparación en Vivo</h3>
+            <p class="text-xs text-slate-400">GlitchLab • Consulta de Estatus para Clientes</p>
+          </div>
+        </div>
+        <button onclick="closeClientTrackingModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-6">
+        
+        <!-- Formulario de Consulta -->
+        <form id="clientTrackingForm" class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row gap-3">
+          <div class="flex-1">
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Folio de la Orden</label>
+            <input type="text" id="trackFolioInput" placeholder="Ej: GL-0001" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-sky-400 font-mono font-bold focus:outline-none" required>
+          </div>
+          <div class="flex-1">
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Teléfono Registrado</label>
+            <input type="tel" id="trackPhoneInput" placeholder="Últimos 4 dígitos o completo" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+          </div>
+          <div class="flex items-end">
+            <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
+              <i class="fas fa-magnifying-glass"></i> Consultar
+            </button>
+          </div>
+        </form>
+
+        <!-- Mensaje de no encontrado -->
+        <div id="trackingError" class="hidden p-4 bg-red-950/40 border border-red-500/40 rounded-2xl text-red-300 text-xs text-center">
+          <i class="fas fa-triangle-exclamation text-base mb-1 block"></i>
+          No encontramos ninguna orden con ese folio y teléfono. Verifica tu ticket o contáctanos por WhatsApp.
+        </div>
+
+        <!-- Resultado del Rastreo -->
+        <div id="trackingResultContainer" class="hidden space-y-5">
+          
+          <div class="bg-slate-950/90 border border-slate-800 p-5 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="trackResultFolio" class="font-mono text-xl font-black text-sky-400">GL-0001</span>
+                <div id="trackStatusBadge"></div>
+              </div>
+              <p class="text-xs text-slate-300 font-medium mt-1">Cliente: <span id="trackResultClient" class="text-white"></span></p>
+              <p class="text-xs text-slate-400">Dispositivo: <span id="trackResultEquipment" class="text-sky-300 font-semibold"></span></p>
+            </div>
+            <div class="text-right text-xs text-slate-400">
+              <span>Ingresado el:</span>
+              <div id="trackResultDate" class="font-bold text-slate-200"></div>
+            </div>
+          </div>
+
+          <!-- Stepper de Progreso -->
+          <div class="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Progreso de la Reparación:</p>
+            <div class="flex items-center justify-between text-center relative">
+              <div class="flex flex-col items-center gap-1 z-10">
+                <div id="step-received" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-bold">1</div>
+                <span class="text-[10px] text-slate-400 font-medium">Recibido</span>
+              </div>
+              <div class="flex flex-col items-center gap-1 z-10">
+                <div id="step-diagnostic" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-bold">2</div>
+                <span class="text-[10px] text-slate-400 font-medium">Diagnóstico</span>
+              </div>
+              <div class="flex flex-col items-center gap-1 z-10">
+                <div id="step-in_progress" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-bold">3</div>
+                <span class="text-[10px] text-slate-400 font-medium">Reparación</span>
+              </div>
+              <div class="flex flex-col items-center gap-1 z-10">
+                <div id="step-ready" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-bold">4</div>
+                <span class="text-[10px] text-slate-400 font-medium">Listo</span>
+              </div>
+              <div class="flex flex-col items-center gap-1 z-10">
+                <div id="step-delivered" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-bold">5</div>
+                <span class="text-[10px] text-slate-400 font-medium">Entregado</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diagnóstico y Notas -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div class="p-4 bg-slate-950/60 rounded-xl border border-slate-800">
+              <strong class="text-slate-400 block mb-1">Falla Reportada:</strong>
+              <p id="trackIssue" class="text-slate-200"></p>
+            </div>
+            <div class="p-4 bg-slate-950/60 rounded-xl border border-slate-800">
+              <strong class="text-sky-400 block mb-1">Diagnóstico de Laboratorio:</strong>
+              <p id="trackDiagnosis" class="text-slate-200"></p>
+            </div>
+          </div>
+
+          <!-- Finanzas para el Cliente -->
+          <div class="p-4 bg-sky-950/30 border border-sky-500/30 rounded-2xl flex items-center justify-between text-xs">
+            <div>
+              <span class="text-slate-400 block">Presupuesto Estimado:</span>
+              <span id="trackEstCost" class="font-bold text-white text-sm"></span>
+            </div>
+            <div>
+              <span class="text-slate-400 block">Anticipo Cubierto:</span>
+              <span id="trackAdvCost" class="font-bold text-sky-400 text-sm"></span>
+            </div>
+            <div class="text-right">
+              <span class="text-amber-400 font-bold block uppercase text-[10px]">Saldo por Pagar:</span>
+              <span id="trackBalCost" class="font-black text-amber-400 text-base"></span>
+            </div>
+          </div>
+
+          <!-- Fotos públicas del avance -->
+          <div id="trackPhotosSection" class="hidden">
+            <p class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <i class="fas fa-camera text-sky-400"></i> Evidencia Fotográfica de tu Reparación:
+            </p>
+            <div id="trackPhotosContainer" class="grid grid-cols-3 gap-2"></div>
+          </div>
+
+          <!-- Bitácora de avances -->
+          <div id="trackLogsSection" class="hidden space-y-2">
+            <p class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <i class="fas fa-clock-rotate-left text-sky-400"></i> Historial de Avances Registrados:
+            </p>
+            <div id="trackLogsContainer" class="space-y-2 max-h-40 overflow-y-auto"></div>
+          </div>
+
+          <!-- Contacto Directo WhatsApp -->
+          <div class="pt-2 text-center">
+            <a id="trackBtnWhatsApp" href="#" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition">
+              <i class="fab fa-whatsapp text-sm"></i> ¿Dudas sobre tu equipo? Escríbenos por WhatsApp
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: PLANTILLAS RÁPIDAS DE WHATSAPP      -->
+  <!-- ========================================== -->
+  <div id="whatsappModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl shadow-2xl my-auto">
+      
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-3xl">
+        <div class="flex items-center gap-2.5">
+          <i class="fab fa-whatsapp text-emerald-400 text-2xl"></i>
+          <div>
+            <h3 class="text-base font-bold text-white">Enviar Mensaje de WhatsApp</h3>
+            <p class="text-xs text-slate-400">Cliente: <span id="waClientName" class="text-white font-semibold"></span> (<span id="waOrderFolio" class="font-mono text-sky-400"></span>)</p>
+          </div>
+        </div>
+        <button onclick="closeWhatsAppTemplatesModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        
+        <!-- Selector de Plantilla -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-2">Selecciona la plantilla rápida:</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            <button type="button" onclick="selectWhatsAppTemplate('received')" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex flex-col items-center gap-1 text-center transition">
+              <i class="fas fa-inbox text-blue-400"></i>
+              <span class="font-semibold text-[11px]">📥 Confirmar Ingreso</span>
+            </button>
+            <button type="button" onclick="selectWhatsAppTemplate('budget')" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex flex-col items-center gap-1 text-center transition">
+              <i class="fas fa-coins text-amber-400"></i>
+              <span class="font-semibold text-[11px]">💰 Presupuesto Listo</span>
+            </button>
+            <button type="button" onclick="selectWhatsAppTemplate('progress')" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex flex-col items-center gap-1 text-center transition">
+              <i class="fas fa-microchip text-sky-400"></i>
+              <span class="font-semibold text-[11px]">⚙️ Avance Técnico</span>
+            </button>
+            <button type="button" onclick="selectWhatsAppTemplate('ready')" class="p-2.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-700/60 flex flex-col items-center gap-1 text-center transition">
+              <i class="fas fa-circle-check text-emerald-400"></i>
+              <span class="font-semibold text-[11px]">✅ ¡Listo para Entrega!</span>
+            </button>
+            <button type="button" onclick="selectWhatsAppTemplate('warranty')" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex flex-col items-center gap-1 text-center transition col-span-2 sm:col-span-2">
+              <i class="fas fa-star text-yellow-400"></i>
+              <span class="font-semibold text-[11px]">⭐ Agradecimiento & Reseña Google</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Previsualización y edición de mensaje -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+            <span>Mensaje a Enviar:</span>
+            <span class="text-[10px] text-slate-500 font-normal">Puedes editar el texto antes de enviar</span>
+          </label>
+          <textarea id="waMessagePreview" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 font-sans"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" onclick="closeWhatsAppTemplatesModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white">
+            Cancelar
+          </button>
+          <button type="button" onclick="sendSelectedWhatsAppMessage()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center gap-2 shadow-lg shadow-emerald-600/30">
+            <i class="fab fa-whatsapp"></i> Abrir WhatsApp y Enviar
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: INVENTARIO DE REFACCIONES           -->
+  <!-- ========================================== -->
+  <div id="inventoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl my-auto">
+      
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-3xl">
+        <div class="flex items-center gap-2.5">
+          <i class="fas fa-boxes-stacked text-sky-400 text-xl"></i>
+          <div>
+            <h3 class="text-base font-bold text-white">Inventario de Componentes & Repuestos</h3>
+            <p class="text-xs text-slate-400">Stock de microelectrónica, pantallas, discos y refacciones</p>
+          </div>
+        </div>
+        <button onclick="closeInventoryModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-6 overflow-y-auto flex-1">
+        
+        <!-- Formulario: Nueva Refacción -->
+        <form id="newInventoryForm" class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 space-y-3">
+          <p class="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fas fa-plus-circle"></i> Agregar Nuevo Componente al Catálogo:
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Nombre del Componente / Repuesto *</label>
+              <input type="text" id="invName" placeholder="Ej: MOSFET N-Channel AON6414A" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" required>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">SKU / Clave</label>
+              <input type="text" id="invSku" placeholder="Ej: IC-6414" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Categoría</label>
+              <select id="invCategory" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none">
+                <option value="Microelectrónica">Microelectrónica</option>
+                <option value="Pantallas">Pantallas / Displays</option>
+                <option value="Almacenamiento">Almacenamiento (SSD/HDD)</option>
+                <option value="Insumos">Insumos (Pastas/Pads)</option>
+                <option value="Baterías">Baterías</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Stock Inicial</label>
+              <input type="number" id="invStock" value="5" min="0" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" required>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Stock Mínimo (Alerta)</label>
+              <input type="number" id="invMinStock" value="2" min="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Costo ($ MXN)</label>
+              <input type="number" id="invCost" step="0.01" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Precio Cobrado ($ MXN)</label>
+              <input type="number" id="invPrice" step="0.01" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-sky-400 font-bold focus:outline-none" required>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-1">
+            <button type="submit" class="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
+              <i class="fas fa-plus"></i> Guardar en Inventario
+            </button>
+          </div>
+        </form>
+
+        <!-- Tabla de Refacciones -->
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-950 text-slate-400 text-[11px] uppercase border-b border-slate-800">
+                <th class="py-2.5 px-3">Componente / SKU</th>
+                <th class="py-2.5 px-3">Categoría</th>
+                <th class="py-2.5 px-3">Disponibles</th>
+                <th class="py-2.5 px-3">Costo</th>
+                <th class="py-2.5 px-3">Precio</th>
+                <th class="py-2.5 px-3 text-right">Ajuste</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTableBody">
+              <!-- Renderizado por renderInventoryTable() -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CORTE DE CAJA & REPORTES (EXCEL)    -->
+  <!-- ========================================== -->
+  <div id="financialModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl shadow-2xl my-auto">
+      
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/80 rounded-t-3xl">
+        <div class="flex items-center gap-2.5">
+          <i class="fas fa-cash-register text-emerald-400 text-xl"></i>
+          <div>
+            <h3 class="text-base font-bold text-white">Corte de Caja & Finanzas</h3>
+            <p class="text-xs text-slate-400">Resumen de ingresos recaudados y saldos pendientes</p>
+          </div>
+        </div>
+        <button onclick="closeFinancialReportModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-6">
+        
+        <!-- Tarjetas de Resumen -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+            <span class="text-xs text-slate-400 block mb-1">Recaudado Hoy</span>
+            <span id="reportTodayCash" class="text-2xl font-black text-emerald-400">$0</span>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+            <span class="text-xs text-slate-400 block mb-1">Total Ingresos Mes</span>
+            <span id="reportMonthCash" class="text-2xl font-black text-sky-400">$0</span>
+          </div>
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+            <span class="text-xs text-slate-400 block mb-1">Saldos por Cobrar</span>
+            <span id="reportPendingReceivable" class="text-2xl font-black text-amber-400">$0</span>
+          </div>
+        </div>
+
+        <!-- Desglose por Método de Pago -->
+        <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Desglose por Método de Pago:</h4>
+          <div class="grid grid-cols-3 gap-3 text-center text-xs">
+            <div class="p-3 bg-slate-900 rounded-xl border border-slate-800">
+              <span class="text-slate-400 block">💵 Efectivo</span>
+              <span id="reportMethodCash" class="font-bold text-white text-sm"></span>
+            </div>
+            <div class="p-3 bg-slate-900 rounded-xl border border-slate-800">
+              <span class="text-slate-400 block">🏦 Transferencia</span>
+              <span id="reportMethodTransfer" class="font-bold text-white text-sm"></span>
+            </div>
+            <div class="p-3 bg-slate-900 rounded-xl border border-slate-800">
+              <span class="text-slate-400 block">💳 Tarjeta</span>
+              <span id="reportMethodCard" class="font-bold text-white text-sm"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón Exportar a Excel -->
+        <div class="p-4 bg-emerald-950/30 border border-emerald-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div>
+            <h5 class="text-xs font-bold text-emerald-300">Descargar Reporte Completo a Excel</h5>
+            <p class="text-[11px] text-slate-400">Genera un archivo CSV compatible con Excel con todas las órdenes, clientes y finanzas.</p>
+          </div>
+          <button 
+            onclick="exportOrdersToCSV()" 
+            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg transition flex items-center gap-2 whitespace-nowrap"
+          >
+            <i class="fas fa-file-csv text-sm"></i> Exportar a Excel (.csv)
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: DETALLE COMPLETO DE LA ORDEN        -->
+  <!-- ========================================== -->
+  <div id="orderDetailModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
+    <div class="bg-[#0b101e] border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl my-auto overflow-hidden">
+      
+      <!-- Cabecera del Detalle -->
+      <div class="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/80">
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center font-mono font-black text-sm">
+            #<span id="dtlFolioNum">1</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-black text-white font-mono tracking-tight">Orden #<span id="dtlFolio">1</span></h3>
+              <div id="dtlStatusBadge"></div>
+              <div id="dtlWarrantyBadge"></div>
+            </div>
+            <p class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+              <i class="far fa-calendar-alt text-[10px]"></i>
+              <span id="dtlDate"></span> • Especialista: <span id="dtlTechnician" class="text-slate-300 font-medium"></span>
+            </p>
+          </div>
+        </div>
+
+        <button onclick="closeOrderDetailModal()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition">
+          <i class="fas fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Contenido Completo de la Orden -->
+      <div class="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+        
+        <!-- Bloque 1: Cliente & Contacto Directo -->
+        <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+              <i class="fas fa-user-circle"></i> Información del Cliente
+            </span>
+            <div class="flex items-center gap-2">
+              <a id="dtlBtnCall" href="#" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-sky-300 rounded-lg font-medium flex items-center gap-1 transition">
+                <i class="fas fa-phone-volume text-[10px]"></i> Llamar
+              </a>
+              <button id="dtlBtnWaQuick" onclick="openWhatsAppForCurrentOrder()" class="px-2.5 py-1 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/60 text-emerald-300 rounded-lg font-medium flex items-center gap-1 transition">
+                <i class="fab fa-whatsapp text-[11px]"></i> WhatsApp
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300">
+            <div>
+              <span class="text-slate-500 block text-[10px]">Nombre:</span>
+              <strong id="dtlClientName" class="text-sm text-white font-bold block uppercase"></strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px]">Teléfono:</span>
+              <span id="dtlClientPhone" class="text-sky-300 font-mono font-medium"></span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px]">Correo:</span>
+              <span id="dtlClientEmail"></span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px]">Dirección / Domicilio:</span>
+              <span id="dtlClientAddress"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque 2: Dispositivo, Acceso & Accesorios -->
+        <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5 mb-2">
+            <i class="fas fa-microchip"></i> Dispositivo, Acceso & Recepción
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-300">
+            <div>
+              <span class="text-slate-500 block text-[10px]">Equipo:</span>
+              <strong id="dtlEquipmentName" class="text-white text-sm font-semibold"></strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px]">No. de Serie / IMEI:</span>
+              <span id="dtlEquipmentSerial" class="font-mono text-slate-300"></span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px]">Clave / PIN de Seguridad:</span>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span id="dtlEquipmentPassword" class="font-mono text-sky-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800"></span>
+                <button type="button" id="btnToggleDtlPass" class="text-slate-500 hover:text-white p-1 text-xs">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px]">Accesorios Dejados en Recepción:</span>
+              <strong id="dtlEquipmentAccessories" class="text-amber-300 font-semibold block mt-0.5"></strong>
+            </div>
+            <div class="sm:col-span-2 pt-2 border-t border-slate-800/60">
+              <span class="text-slate-500 block text-[10px]">Condición Física / Estado Estético:</span>
+              <span id="dtlEquipmentCondition" class="text-slate-300"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloque 3: Motivo de Ingreso & Diagnóstico Técnico -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400 block mb-1.5 flex items-center gap-1.5">
+              <i class="fas fa-triangle-exclamation"></i> Falla Reportada por el Cliente
+            </span>
+            <p id="dtlIssue" class="text-slate-200 italic font-medium leading-relaxed bg-[#060913] p-3 rounded-xl border border-slate-800/60"></p>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400 block mb-1.5 flex items-center gap-1.5">
+              <i class="fas fa-screwdriver-wrench"></i> Diagnóstico Técnico de Laboratorio
+            </span>
+            <p id="dtlDiagnosis" class="text-slate-200 font-medium leading-relaxed bg-[#060913] p-3 rounded-xl border border-slate-800/60"></p>
+          </div>
+        </div>
+
+        <!-- Bloque 4: Desglose Financiero -->
+        <div class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="text-slate-400 block text-[11px]">Presupuesto Total:</span>
+            <strong id="dtlCostEst" class="text-white text-base font-bold"></strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[11px]">Anticipo Cubierto:</span>
+            <strong id="dtlCostAdv" class="text-sky-400 text-base font-bold"></strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[11px]">Método de Pago:</span>
+            <span id="dtlCostMethod" class="text-slate-300 font-medium"></span>
+          </div>
+          <div class="text-right">
+            <span class="text-amber-400 block text-[10px] uppercase font-bold">Saldo Pendiente:</span>
+            <strong id="dtlCostBal" class="text-xl font-black text-amber-400"></strong>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer con Acciones Completas de la Orden -->
+      <div class="px-6 py-3.5 border-t border-slate-800/80 bg-slate-950/90 flex flex-wrap items-center justify-between gap-3">
+        
+        <!-- Cambiar Estado Directamente -->
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] text-slate-400 font-medium">Estado:</span>
+          <select id="dtlQuickStatusSelect" onchange="handleDtlQuickStatusChange(this.value)" class="bg-slate-900 border border-slate-700 text-xs text-white rounded-xl px-3 py-1.5 focus:outline-none focus:border-sky-500">
+            <option value="received">📥 Recibido</option>
+            <option value="diagnostic">🔍 En Diagnóstico</option>
+            <option value="in_progress">⚙️ En Reparación</option>
+            <option value="waiting_parts">📦 Espera Repuesto</option>
+            <option value="ready">✅ Listo para Entrega</option>
+            <option value="delivered">🤝 Entregado</option>
+            <option value="cancelled">❌ Cancelado</option>
+          </select>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex flex-wrap items-center gap-1.5">
+          <!-- Imprimir Etiqueta / Sticker -->
+          <button id="dtlBtnSticker" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-white rounded-xl border border-slate-800 text-xs font-semibold transition flex items-center gap-1.5">
+            <i class="fas fa-tag text-xs"></i>
+            <span>Etiqueta</span>
+          </button>
+
+          <!-- Descargar PDF Cliente -->
+          <button id="dtlBtnPdf" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-red-400 hover:text-white rounded-xl border border-slate-800 text-xs font-semibold transition flex items-center gap-1.5">
+            <i class="fas fa-file-pdf text-xs"></i>
+            <span>PDF</span>
+          </button>
+
+          <!-- Imprimir Comprobante -->
+          <button id="dtlBtnPrint" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white rounded-xl border border-slate-800 text-xs font-semibold transition flex items-center gap-1.5">
+            <i class="fas fa-print text-xs"></i>
+            <span>Imprimir</span>
+          </button>
+
+          <!-- Bitácora -->
+          <button id="dtlBtnBitacora" class="px-3 py-1.5 bg-sky-950/60 hover:bg-sky-900/60 border border-sky-500/40 text-sky-300 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+            <i class="fas fa-clipboard-list text-xs"></i>
+            <span>Bitácora</span>
+          </button>
+
+          <!-- Editar -->
+          <button id="dtlBtnEdit" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-800 text-xs font-semibold transition flex items-center gap-1.5">
+            <i class="fas fa-pen text-xs"></i>
+            <span>Editar</span>
+          </button>
+
+          <!-- Eliminar -->
+          <button id="dtlBtnDelete" class="p-2 text-slate-500 hover:text-red-400 hover:bg-red-950/40 rounded-xl transition" title="Eliminar orden">
+            <i class="fas fa-trash text-xs"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
   <!-- MODAL: Crear / Editar Orden de Servicio    -->
   <!-- ========================================== -->
   <div id="orderModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl my-auto">
       
-      <!-- Modal Header -->
       <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50 rounded-t-2xl">
         <div class="flex items-center gap-3">
           <div class="h-8 w-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
@@ -357,14 +1082,13 @@
         </button>
       </div>
 
-      <!-- Modal Body -->
       <form id="orderForm" class="flex-1 overflow-y-auto p-6 space-y-6">
         
         <!-- Bloque 1: Folio, Fecha y Estado -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Folio de Orden</label>
-            <input type="text" id="orderId" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-sky-400 font-mono font-bold focus:outline-none" readonly>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Folio Consecutivo</label>
+            <input type="text" id="orderId" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-sky-400 font-mono font-black focus:outline-none" readonly>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1">Fecha y Hora de Recepción</label>
@@ -384,19 +1108,24 @@
           </div>
         </div>
 
-        <!-- Bloque 2: Datos del Cliente -->
+        <!-- Bloque 2: Datos del Cliente (con Autocompletado de Clientes Frecuentes) -->
         <div>
           <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 mb-3 flex items-center gap-2">
             <i class="fas fa-user"></i> Datos del Cliente
+            <span class="text-[10px] text-slate-500 font-normal lowercase">(autocompleta si ya es cliente recurrente)</span>
           </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-2">
+            
+            <div class="lg:col-span-2 relative">
               <label class="block text-xs font-medium text-slate-300 mb-1">Nombre Completo *</label>
-              <input type="text" id="clientName" placeholder="Ej: Carlos Mendoza" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required>
+              <input type="text" id="clientName" placeholder="Escribe para buscar cliente existente..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required autocomplete="off">
+              <!-- Dropdown de autocompletado -->
+              <div id="clientAutocompleteDropdown" class="absolute z-30 w-full bg-slate-900 border border-slate-700 rounded-xl shadow-2xl mt-1 hidden max-h-48 overflow-y-auto"></div>
             </div>
+
             <div>
               <label class="block text-xs font-medium text-slate-300 mb-1">Teléfono / WhatsApp *</label>
-              <input type="tel" id="clientPhone" placeholder="Ej: 3111234567" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required>
+              <input type="tel" id="clientPhone" placeholder="Ej: 3111234567" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none" required autocomplete="off">
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-300 mb-1">Correo Electrónico</label>
@@ -645,7 +1374,6 @@
   <div id="bitacoraModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl max-h-[94vh] flex flex-col shadow-2xl my-auto">
       
-      <!-- Bitacora Header -->
       <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-2xl">
         <div class="flex items-center gap-3">
           <div class="h-9 w-9 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg">
@@ -654,7 +1382,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h3 class="text-base font-bold text-white">Bitácora & Evidencia de Reparación</h3>
-              <span id="bitacoraFolioBadge" class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">GL-2026-0000</span>
+              <span id="bitacoraFolioBadge" class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">GL-0001</span>
             </div>
             <p class="text-xs text-slate-400">
               <span id="bitacoraEquipmentHeader" class="text-slate-300 font-medium">Equipo</span> • Cliente: <span id="bitacoraClientHeader" class="text-slate-300">Cliente</span>
@@ -667,7 +1395,6 @@
         </button>
       </div>
 
-      <!-- Bitacora Body -->
       <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-slate-950/30">
         
         <!-- Columna Izquierda: Fotos y Subida -->
@@ -690,14 +1417,11 @@
             </label>
           </div>
 
-          <!-- Galería Grid -->
           <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4">
             <h5 class="text-xs font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
               <i class="fas fa-images text-sky-400 text-[11px]"></i> Fotos Registradas:
             </h5>
-            <div id="photoGalleryContainer" class="grid grid-cols-2 gap-3 max-h-[480px] overflow-y-auto pr-1">
-              <!-- Renderizado por renderPhotoGallery() -->
-            </div>
+            <div id="photoGalleryContainer" class="grid grid-cols-2 gap-3 max-h-[480px] overflow-y-auto pr-1"></div>
           </div>
 
         </div>
@@ -742,7 +1466,7 @@
               <textarea 
                 id="bitacoraNotes" 
                 rows="2" 
-                placeholder="Explica qué mediciones se hicieron, componentes cambiados, voltajes medidos, o pruebas realizadas..." 
+                placeholder="Explica qué mediciones se hicieron, componentes cambiados o pruebas realizadas..." 
                 class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:border-sky-500 focus:outline-none" 
                 required
               ></textarea>
@@ -771,9 +1495,7 @@
             <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
               <i class="fas fa-clock-rotate-left text-sky-400"></i> Historial de Procedimientos Realizados
             </h4>
-            <div id="bitacoraTimeline" class="space-y-1">
-              <!-- Renderizado por renderBitacoraTimeline() -->
-            </div>
+            <div id="bitacoraTimeline" class="space-y-1"></div>
           </div>
 
         </div>
@@ -794,11 +1516,10 @@
     </div>
   </div>
 
-  <!-- MODAL: Previsualización de Impresión y Selección de Formato -->
+  <!-- MODAL: Previsualización de Impresión (Carta, Ticket & Sticker) -->
   <div id="printModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[95vh] flex flex-col shadow-2xl my-auto">
       
-      <!-- Print Header / Bar -->
       <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-2xl">
         <div class="flex items-center gap-3">
           <div class="h-8 w-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
@@ -810,19 +1531,31 @@
           </div>
         </div>
 
-        <!-- Formatos Switcher -->
-        <div class="flex items-center gap-2">
+        <!-- Selector de Formato: PDF Cliente, Etiqueta Aiyin AE-240BT, Ticket 80mm y Carta -->
+        <div class="flex flex-wrap items-center gap-2">
           <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button id="btnFormatLetter" onclick="setPrintFormat('letter')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500 text-white transition flex items-center gap-1.5">
-              <i class="fas fa-file-lines"></i> Hoja Carta / A4
+            <button id="btnFormatClientPdf" onclick="setPrintFormat('client_pdf')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500 text-white transition flex items-center gap-1.5">
+              <i class="fas fa-file-pdf text-red-400"></i> PDF Cliente
+            </button>
+            <button id="btnFormatSticker" onclick="setPrintFormat('sticker')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5">
+              <i class="fas fa-tag text-amber-400"></i> Etiqueta (Aiyin AE-240BT)
             </button>
             <button id="btnFormatThermal" onclick="setPrintFormat('thermal')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5">
-              <i class="fas fa-receipt"></i> Ticket Térmico 80mm
+              <i class="fas fa-receipt"></i> Ticket 80mm
+            </button>
+            <button id="btnFormatLetter" onclick="setPrintFormat('letter')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition flex items-center gap-1.5">
+              <i class="fas fa-file-lines"></i> Carta / A4
             </button>
           </div>
 
-          <button onclick="triggerPrint()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
-            <i class="fas fa-print"></i> Imprimir Ahora
+          <!-- Botón de Descarga Directa en PDF para Cliente -->
+          <button onclick="downloadCustomerPDF(currentPrintOrderId)" class="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-red-600/20" title="Generar y descargar archivo PDF oficial">
+            <i class="fas fa-download"></i> Descargar PDF
+          </button>
+
+          <!-- Botón Imprimir -->
+          <button onclick="triggerPrint()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20">
+            <i class="fas fa-print"></i> Imprimir
           </button>
           
           <button onclick="closePrintModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
@@ -831,7 +1564,36 @@
         </div>
       </div>
 
-      <!-- Print Preview Scrollable Area -->
+      <!-- Barra Específica de Configuración de Etiqueta Térmica Aiyin AE-240BT -->
+      <div id="aiyinStickerToolbar" class="hidden px-6 py-2.5 bg-slate-950/90 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-[11px]">
+            <i class="fas fa-print"></i> Aiyin AE-240BT (203 DPI)
+          </span>
+          <span class="text-slate-400 text-[11px] hidden sm:inline">Selecciona la medida de tu rollo:</span>
+        </div>
+
+        <div class="flex items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <button type="button" id="btnStickerSize50x30" onclick="setStickerSize('50x30')" class="px-3 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-300 hover:text-white transition">
+            50 × 30 mm (Mini)
+          </button>
+          <button type="button" id="btnStickerSize60x40" onclick="setStickerSize('60x40')" class="px-3 py-1 rounded-lg text-[11px] font-semibold bg-sky-500 text-white transition">
+            60 × 40 mm (Estándar)
+          </button>
+          <button type="button" id="btnStickerSize76x50" onclick="setStickerSize('76x50')" class="px-3 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-300 hover:text-white transition">
+            76 × 50 mm (Grande)
+          </button>
+          <button type="button" id="btnStickerSize100x150" onclick="setStickerSize('100x150')" class="px-3 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-300 hover:text-white transition">
+            100 × 150 mm (4"×6" Caja)
+          </button>
+        </div>
+
+        <div class="text-[11px] text-slate-400 flex items-center gap-1">
+          <i class="fas fa-check-circle text-emerald-400"></i>
+          <span>Alto contraste puro (#000) sin margen de papel</span>
+        </div>
+      </div>
+
       <div class="flex-1 overflow-y-auto p-6 bg-slate-950 flex justify-center">
         <div id="print-area" class="w-full bg-white text-slate-900 rounded-lg shadow-xl p-6">
           <!-- Inyectado por generatePrintTemplate() -->
@@ -841,13 +1603,13 @@
     </div>
   </div>
 
-  <!-- MODAL: Configuración del Taller GlitchLab & Gestión de Usuarios -->
+  <!-- MODAL: Configuración del Taller, Personal & Garantías -->
   <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl my-auto max-h-[92vh] flex flex-col">
       
       <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50 rounded-t-2xl">
         <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fas fa-users-gear text-sky-400"></i> Ajustes del Taller & Usuarios
+          <i class="fas fa-users-gear text-sky-400"></i> Ajustes del Taller, Personal & Garantías
         </h3>
         <button onclick="closeShopSettingsModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
           <i class="fas fa-xmark"></i>
@@ -856,7 +1618,7 @@
 
       <div class="p-6 space-y-6 overflow-y-auto flex-1">
         
-        <!-- SECCIÓN 1: GESTIÓN DE USUARIOS Y PERSONAL (NUEVO) -->
+        <!-- Gestión de Usuarios -->
         <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 space-y-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -866,7 +1628,6 @@
             <span class="text-[11px] text-slate-400">Acceso individual con roles</span>
           </div>
 
-          <!-- Tabla de Usuarios Existentes -->
           <div class="overflow-x-auto rounded-xl border border-slate-800">
             <table class="w-full text-left border-collapse">
               <thead>
@@ -877,13 +1638,11 @@
                   <th class="py-2 px-3 text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody id="usersListTableBody">
-                <!-- Generado por renderUsersList() -->
-              </tbody>
+              <tbody id="usersListTableBody"></tbody>
             </table>
           </div>
 
-          <!-- Formulario: Agregar Nuevo Usuario -->
+          <!-- Formulario nuevo usuario -->
           <form id="newUserForm" class="pt-3 border-t border-slate-800 space-y-3">
             <p class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
               <i class="fas fa-user-plus text-sky-400"></i> Registrar Nuevo Empleado / Técnico:
@@ -895,19 +1654,19 @@
                 <input type="text" id="newUserName" placeholder="Ej: Ing. Laura Gómez" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" required>
               </div>
               <div>
-                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Nombre de Usuario (Login) *</label>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Usuario (Login) *</label>
                 <input type="text" id="newUserUsername" placeholder="Ej: laura" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" required>
               </div>
               <div>
-                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Contraseña de Acceso *</label>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Contraseña *</label>
                 <input type="password" id="newUserPassword" placeholder="Mínimo 4 caracteres" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none" required>
               </div>
               <div>
                 <label class="block text-[11px] font-semibold text-slate-400 mb-1">Rol / Permisos *</label>
                 <select id="newUserRole" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none">
-                  <option value="technician">🔧 Técnico Especialista (Diagnóstico & Reparación)</option>
-                  <option value="reception">📋 Recepción (Recepción & Cobro en Mostrador)</option>
-                  <option value="admin">👑 Administrador (Acceso Total)</option>
+                  <option value="technician">🔧 Técnico Especialista</option>
+                  <option value="reception">📋 Recepción Mostrador</option>
+                  <option value="admin">👑 Administrador</option>
                 </select>
               </div>
             </div>
@@ -920,20 +1679,28 @@
           </form>
         </div>
 
-        <!-- SECCIÓN 2: DATOS DEL TALLER Y TÉRMINOS -->
+        <!-- Datos del Taller y Días de Garantía -->
         <form onsubmit="handleSaveShopSettings(event)" class="space-y-4 pt-2">
           <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-2">
-            <i class="fas fa-store"></i> Información Comercial de GlitchLab
+            <i class="fas fa-store"></i> Información Comercial & Políticas de Garantía
           </h4>
 
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Comercial</label>
-            <input type="text" id="cfgShopName" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre Comercial</label>
+              <input type="text" id="cfgShopName" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Días de Garantía por Defecto</label>
+              <input type="number" id="cfgShopWarrantyDays" min="0" value="30" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+            </div>
           </div>
+
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1">Eslogan / Especialidad</label>
             <input type="text" id="cfgShopSlogan" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
           </div>
+
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-semibold text-slate-400 mb-1">Teléfono / WhatsApp</label>
@@ -944,10 +1711,12 @@
               <input type="email" id="cfgShopEmail" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
             </div>
           </div>
+
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1">Dirección del Laboratorio</label>
             <input type="text" id="cfgShopAddress" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
           </div>
+
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1">Términos y Condiciones (Impresos al pie del comprobante)</label>
             <textarea id="cfgShopTerms" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 focus:outline-none"></textarea>
@@ -955,12 +1724,332 @@
 
           <div class="flex justify-end">
             <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white">
-              Guardar Datos del Taller
+              Guardar Ajustes
             </button>
           </div>
         </form>
 
       </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CONEXIÓN SUPABASE CLUSTER & STORAGE  -->
+  <!-- ========================================== -->
+  <div id="supabaseModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl my-auto">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-3xl">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg">
+            <i class="fas fa-cloud-bolt"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              Supabase Cloud Database & Storage
+            </h3>
+            <p class="text-xs text-slate-400">Guarda órdenes, clientes y fotos de evidencia en la nube en tiempo real</p>
+          </div>
+        </div>
+        <button onclick="closeSupabaseSettingsModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-5 overflow-y-auto flex-1">
+        
+        <!-- Estado de la Conexión Card -->
+        <div id="sbStatusCard" class="p-4 rounded-2xl border transition flex items-center justify-between bg-slate-950/60 border-slate-800">
+          <div class="flex items-center gap-3">
+            <div id="sbStatusIcon" class="w-10 h-10 rounded-xl bg-slate-800 text-slate-400 flex items-center justify-center text-lg">
+              <i class="fas fa-database"></i>
+            </div>
+            <div>
+              <div id="sbStatusTitle" class="text-sm font-bold text-white">Modo Almacenamiento Local</div>
+              <div id="sbStatusSubtitle" class="text-xs text-slate-400">Tus datos y fotos están guardados en este navegador. Configura Supabase para sincronizar con la nube.</div>
+            </div>
+          </div>
+          <span id="sbStatusBadge" class="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Local</span>
+        </div>
+
+        <!-- Formulario Credenciales Supabase -->
+        <form onsubmit="handleSaveSupabaseConfig(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>Project URL de Supabase *</span>
+              <span class="text-[10px] text-slate-500 font-normal">Settings &gt; API &gt; Project URL</span>
+            </label>
+            <div class="relative">
+              <i class="fas fa-globe absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+              <input 
+                type="url" 
+                id="sbProjectUrl" 
+                placeholder="https://xyzabcdefghijklm.supabase.co" 
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                required
+              >
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>Anon / Public API Key *</span>
+              <span class="text-[10px] text-slate-500 font-normal">Settings &gt; API &gt; Project API keys (anon / public)</span>
+            </label>
+            <div class="relative">
+              <i class="fas fa-key absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+              <input 
+                type="password" 
+                id="sbAnonKey" 
+                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                required
+              >
+              <button type="button" onclick="toggleSbKeyVisibility()" class="absolute right-3 top-2.5 text-slate-500 hover:text-slate-300 text-xs">
+                <i id="sbKeyEyeIcon" class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>Bucket para Fotos de Órdenes (Storage)</span>
+              <span class="text-[10px] text-slate-500 font-normal">Almacena fotos de evidencia y microscopio</span>
+            </label>
+            <div class="relative">
+              <i class="fas fa-images absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+              <input 
+                type="text" 
+                id="sbBucketName" 
+                value="order-photos" 
+                placeholder="order-photos" 
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+              >
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+            <button 
+              type="button" 
+              onclick="disconnectSupabase()" 
+              id="btnDisconnectSb" 
+              class="px-4 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-950/40 border border-red-900/50 transition hidden"
+            >
+              <i class="fas fa-plug-circle-xmark mr-1"></i> Desconectar Supabase
+            </button>
+
+            <div class="flex items-center gap-2 ml-auto">
+              <button 
+                type="button" 
+                onclick="testSupabaseConnectionUI()" 
+                id="btnTestSb" 
+                class="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5"
+              >
+                <i class="fas fa-vial"></i> Probar Conexión
+              </button>
+              <button 
+                type="submit" 
+                id="btnSaveSb" 
+                class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/30"
+              >
+                <i class="fas fa-check"></i> Conectar & Guardar
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Acciones de Sincronización Masiva -->
+        <div class="bg-slate-950/40 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <i class="fas fa-rotate text-emerald-400"></i> Acciones de Sincronización Manual
+            </h4>
+            <span id="sbLastSyncLabel" class="text-[11px] text-slate-500">Última sinc: Sin sincronizar</span>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button 
+              onclick="pushAllToSupabase()" 
+              class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 text-slate-200 hover:text-white text-xs font-semibold transition flex items-center justify-center gap-2 text-left"
+            >
+              <i class="fas fa-cloud-arrow-up text-emerald-400 text-sm"></i>
+              <div>
+                <div class="font-bold text-white">Subir a la Nube</div>
+                <div class="text-[10px] text-slate-400">Sube órdenes y clientes locales a Supabase</div>
+              </div>
+            </button>
+
+            <button 
+              onclick="pullAllFromSupabase()" 
+              class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-sky-500/50 text-slate-200 hover:text-white text-xs font-semibold transition flex items-center justify-center gap-2 text-left"
+            >
+              <i class="fas fa-cloud-arrow-down text-sky-400 text-sm"></i>
+              <div>
+                <div class="font-bold text-white">Descargar de la Nube</div>
+                <div class="text-[10px] text-slate-400">Baja órdenes y clientes guardados en Supabase</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Asistente de Creación de Tablas (SQL Script) -->
+        <div class="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950">
+          <div class="px-4 py-3 bg-slate-900/80 flex items-center justify-between cursor-pointer" onclick="toggleSqlScriptAccordion()">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-terminal text-sky-400 text-xs"></i>
+              <span class="text-xs font-bold text-white">Script SQL para crear Tablas y Storage en Supabase</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                onclick="event.stopPropagation(); copySupabaseSqlScript()" 
+                class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-sky-300 rounded-lg text-[11px] font-bold flex items-center gap-1 border border-slate-700 transition"
+              >
+                <i class="fas fa-copy"></i> Copiar SQL
+              </button>
+              <i id="sqlAccordionIcon" class="fas fa-chevron-down text-slate-400 text-xs transition duration-200"></i>
+            </div>
+          </div>
+          <div id="sqlScriptContainer" class="hidden p-4 border-t border-slate-800 text-[11px] font-mono text-slate-300 bg-slate-950 overflow-x-auto max-h-60 leading-relaxed">
+            <pre id="supabaseSqlCodeBlock"></pre>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: DIRECTORIO DE CLIENTES (SUPABASE)   -->
+  <!-- ========================================== -->
+  <div id="clientsModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl my-auto">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-3xl">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-lg">
+            <i class="fas fa-address-book"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white">Directorio de Clientes</h3>
+              <span id="clientsCountBadge" class="px-2 py-0.5 text-xs font-bold rounded-full bg-purple-950 text-purple-300 border border-purple-800">0</span>
+            </div>
+            <p class="text-xs text-slate-400">Historial de clientes frecuentes, contactos y órdenes asociadas</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openNewClientModal()" class="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+            <i class="fas fa-plus"></i> Nuevo Cliente
+          </button>
+          <button onclick="closeClientsModal()" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition">
+            <i class="fas fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Buscador y Filtros -->
+      <div class="px-6 py-3 border-b border-slate-800 bg-slate-950/40 flex flex-wrap items-center justify-between gap-3">
+        <div class="relative flex-1 min-w-[240px]">
+          <i class="fas fa-search absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+          <input 
+            type="text" 
+            id="clientSearchInput" 
+            oninput="handleClientSearch(event)" 
+            placeholder="Buscar cliente por nombre, teléfono, correo o dirección..." 
+            class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+          >
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="syncClientsWithSupabase()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition">
+            <i class="fas fa-arrows-rotate text-purple-400"></i> Sincronizar Clientes
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de Clientes -->
+      <div class="p-6 overflow-y-auto flex-1">
+        <div class="overflow-x-auto rounded-2xl border border-slate-800">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-950 text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-800">
+                <th class="py-3 px-4">Cliente</th>
+                <th class="py-3 px-4">Teléfono & WhatsApp</th>
+                <th class="py-3 px-4">Correo</th>
+                <th class="py-3 px-4">Dirección</th>
+                <th class="py-3 px-4 text-center">Órdenes</th>
+                <th class="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="clientsTableBody" class="divide-y divide-slate-800 text-xs">
+              <!-- Inyectado por renderClientsTable() -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: REGISTRAR / EDITAR CLIENTE          -->
+  <!-- ========================================== -->
+  <div id="clientEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl my-auto">
+      
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 rounded-t-3xl">
+        <h3 id="clientEditModalTitle" class="text-sm font-bold text-white flex items-center gap-2">
+          <i class="fas fa-user text-purple-400"></i> Registrar Nuevo Cliente
+        </h3>
+        <button onclick="closeClientEditModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveClientForm(event)" class="p-6 space-y-4">
+        <input type="hidden" id="editClientId">
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre Completo *</label>
+          <input type="text" id="editClientName" placeholder="Ej: Roberto Morales" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Teléfono (WhatsApp) *</label>
+            <input type="tel" id="editClientPhone" placeholder="10 dígitos" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Correo Electrónico</label>
+            <input type="email" id="editClientEmail" placeholder="cliente@correo.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Dirección / Ubicación</label>
+          <input type="text" id="editClientAddress" placeholder="Colonia, Calle y Número" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Notas Internas</label>
+          <textarea id="editClientNotes" rows="2" placeholder="Observaciones especiales sobre este cliente..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-purple-500"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeClientEditModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+            <i class="fas fa-check"></i> Guardar Cliente
+          </button>
+        </div>
+      </form>
 
     </div>
   </div>
