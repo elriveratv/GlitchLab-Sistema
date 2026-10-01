@@ -1249,7 +1249,23 @@ function loadOrders() {
 }
 
 function saveOrders() {
-  localStorage.setItem('glitchlab_orders', JSON.stringify(AppState.orders));
+  try {
+    localStorage.setItem('glitchlab_orders', JSON.stringify(AppState.orders));
+  } catch (e) {
+    console.warn('LocalStorage excedido al guardar órdenes (posiblemente por imágenes base64). Guardando versión sanitizada:', e);
+    try {
+      const sanitized = AppState.orders.map(o => ({
+        ...o,
+        photos: (o.photos || []).map(p => ({
+          ...p,
+          url: (p.url && p.url.startsWith('data:')) ? '' : p.url
+        }))
+      }));
+      localStorage.setItem('glitchlab_orders', JSON.stringify(sanitized));
+    } catch (e2) {
+      console.error('No se pudo guardar en localStorage:', e2);
+    }
+  }
   // Sincronización automática con Supabase Cloud
   if (AppState.supabase.isConnected && AppState.supabase.client) {
     scheduleOrdersSync();
@@ -1317,10 +1333,11 @@ async function initSupabase(showNotification = false) {
       }
     );
 
-    // Probar conexión rápida realizando una consulta HEAD a la tabla orders
-    const { error } = await AppState.supabase.client
+    // Probar conexión rápida realizando una consulta a la tabla orders
+    const { data: testData, error } = await AppState.supabase.client
       .from('orders')
-      .select('id', { count: 'exact', head: true });
+      .select('id')
+      .limit(1);
 
     if (error) {
       const isMissingTable = error.code === 'PGRST205' || (error.message && error.message.includes('Could not find the table'));
@@ -1840,21 +1857,33 @@ async function autoSyncAll(isSilent = true) {
       renderClientsTable();
     }
 
-    // 3. Subir Órdenes Locales a Supabase
-    if (AppState.orders && AppState.orders.length > 0) {
-      const ordersPayload = AppState.orders.map(mapLocalOrderToSupabase);
-      await AppState.supabase.client.from('orders').upsert(ordersPayload, { onConflict: 'id' });
-    }
+    // 3. Traer Órdenes de Supabase y fusionar (priorizando fotos y bitácoras de la nube)
+    const { data: remoteOrders, error: ordErr } = await AppState.supabase.client
+      .from('orders')
+      .select('*')
+      .order('id', { ascending: false });
 
-    // 4. Traer Órdenes de Supabase y fusionar
-    const { data: remoteOrders, error: ordErr } = await AppState.supabase.client.from('orders').select('*').order('id', { ascending: false });
     if (!ordErr && Array.isArray(remoteOrders)) {
       const dbOrders = remoteOrders.map(mapSupabaseOrderToLocal);
       const orderMap = new Map();
       dbOrders.forEach(o => orderMap.set(o.id.toString(), o));
-      AppState.orders.forEach(o => {
-        if (!orderMap.has(o.id.toString())) {
-          orderMap.set(o.id.toString(), o);
+
+      AppState.orders.forEach(localOrd => {
+        const remote = orderMap.get(localOrd.id.toString());
+        if (!remote) {
+          orderMap.set(localOrd.id.toString(), localOrd);
+        } else {
+          // Fusionar fotos para que nunca se borren ni se pierdan
+          const remotePhotos = remote.photos || [];
+          const localPhotos = localOrd.photos || [];
+          const mergedPhotos = [...remotePhotos];
+          localPhotos.forEach(lp => {
+            if (!mergedPhotos.some(rp => rp.id === lp.id || (rp.storage_path && rp.storage_path === lp.storage_path))) {
+              mergedPhotos.push(lp);
+            }
+          });
+          remote.photos = mergedPhotos;
+          orderMap.set(localOrd.id.toString(), remote);
         }
       });
 
@@ -1864,9 +1893,15 @@ async function autoSyncAll(isSilent = true) {
         return numB - numA;
       });
 
-      localStorage.setItem('glitchlab_orders', JSON.stringify(AppState.orders));
+      saveOrders();
       renderDashboard();
       renderOrders();
+
+      // Si el modal de detalle de orden está abierto, refrescar sus fotos
+      if (typeof currentDetailOrderId !== 'undefined' && currentDetailOrderId) {
+        const currentOrd = AppState.orders.find(o => o.id === currentDetailOrderId);
+        if (currentOrd && typeof renderDtlPhotos === 'function') renderDtlPhotos(currentOrd);
+      }
     }
 
     AppState.supabase.lastSync = new Date().toLocaleTimeString();
@@ -2747,6 +2782,9 @@ function openOrderDetailModal(orderId) {
     });
   }
 
+  // 6. RENDERIZAR FOTOS DE LA ORDEN
+  renderDtlPhotos(order);
+
   // Select de Estado Rápido
   const quickStatusSelect = document.getElementById('dtlQuickStatusSelect');
   if (quickStatusSelect) quickStatusSelect.value = order.status;
@@ -2841,6 +2879,180 @@ function downloadDtlQrCode() {
     link.href = canvas.toDataURL('image/png');
     link.click();
     showToast(`QR de Orden #${currentDetailOrderId} descargado`);
+  }
+}
+
+// ----------------------------------------------------
+// GESTIÓN DE FOTOS DENTRO DEL DETALLE DE LA ORDEN
+// ----------------------------------------------------
+function renderDtlPhotos(order) {
+  const container = document.getElementById('dtlPhotoGrid');
+  const countBadge = document.getElementById('dtlPhotoCountBadge');
+  const emptyNotice = document.getElementById('dtlPhotoEmptyNotice');
+  if (!container) return;
+
+  const photos = order.photos || [];
+  if (countBadge) countBadge.innerText = `${photos.length} foto(s)`;
+
+  if (photos.length === 0) {
+    container.innerHTML = '';
+    if (emptyNotice) emptyNotice.classList.remove('hidden');
+    return;
+  }
+
+  if (emptyNotice) emptyNotice.classList.add('hidden');
+
+  container.innerHTML = photos.map(photo => {
+    const dateFormatted = new Date(photo.date).toLocaleDateString('es-MX', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+
+    return `
+      <div class="relative group bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
+        <div class="aspect-video w-full bg-black cursor-pointer overflow-hidden" onclick="openLightbox('${photo.url}', '${escapeHtml(photo.caption || 'Evidencia técnica')}')">
+          <img src="${photo.url}" alt="${escapeHtml(photo.caption || '')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+        </div>
+        <div class="p-2">
+          <p class="text-[11px] text-slate-200 font-medium truncate" title="${escapeHtml(photo.caption || '')}">
+            ${escapeHtml(photo.caption || 'Evidencia técnica')}
+          </p>
+          <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+            <span>${dateFormatted}</span>
+            <button onclick="deletePhotoFromDtl('${order.id}', '${photo.id}')" class="text-slate-500 hover:text-red-400 transition p-1" title="Eliminar foto">
+              <i class="fas fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function handleDtlPhotoUpload(e) {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+
+  const orderId = currentDetailOrderId;
+  const order = AppState.orders.find(o => o.id === orderId);
+  if (!order) return;
+
+  if (!order.photos) order.photos = [];
+
+  showToast(`Procesando y guardando ${files.length} foto(s)...`);
+
+  for (const file of Array.from(files)) {
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = ev => resolve(ev.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const img = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = dataUrl;
+      });
+
+      const maxDim = 1280;
+      let width = img.width;
+      let height = img.height;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      let finalPhotoUrl = canvas.toDataURL('image/jpeg', 0.82);
+      let storagePath = null;
+
+      // Subir directamente al bucket de Supabase Storage
+      if (AppState.supabase.client) {
+        try {
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+          if (blob) {
+            const cleanOrderId = (orderId || 'general').toString().replace(/\D/g, '') || orderId;
+            storagePath = `orders/${cleanOrderId}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.jpg`;
+            const bucketName = AppState.supabase.bucket || 'order-photos';
+
+            const { data: upData, error: upError } = await AppState.supabase.client.storage
+              .from(bucketName)
+              .upload(storagePath, blob, {
+                contentType: 'image/jpeg',
+                cacheControl: '3600',
+                upsert: true
+              });
+
+            if (upError) {
+              console.warn('Error subiendo foto a Supabase Storage:', upError.message);
+            } else {
+              const { data: publicData } = AppState.supabase.client.storage
+                .from(bucketName)
+                .getPublicUrl(storagePath);
+
+              if (publicData?.publicUrl) {
+                finalPhotoUrl = publicData.publicUrl;
+              }
+            }
+          }
+        } catch (sbErr) {
+          console.warn('Excepción en subida de foto a Supabase:', sbErr);
+        }
+      }
+
+      order.photos.unshift({
+        id: 'photo_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        url: finalPhotoUrl,
+        storage_path: storagePath,
+        caption: 'Evidencia técnica',
+        date: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error('Error al procesar foto:', err);
+    }
+  }
+
+  saveOrders();
+  syncSingleOrderToSupabase(order);
+  renderDtlPhotos(order);
+  renderOrders();
+  showToast('✅ Foto(s) guardadas en la orden y sincronizadas con la nube.');
+  e.target.value = '';
+}
+
+async function deletePhotoFromDtl(orderId, photoId) {
+  const order = AppState.orders.find(o => o.id === orderId);
+  if (!order || !order.photos) return;
+
+  if (confirm('¿Deseas eliminar esta foto de evidencia?')) {
+    const photo = order.photos.find(p => p.id === photoId);
+    if (photo && photo.storage_path && AppState.supabase.client) {
+      try {
+        await AppState.supabase.client.storage
+          .from(AppState.supabase.bucket || 'order-photos')
+          .remove([photo.storage_path]);
+      } catch (e) {
+        console.warn('Error borrando de Storage:', e);
+      }
+    }
+    order.photos = order.photos.filter(p => p.id !== photoId);
+    saveOrders();
+    syncSingleOrderToSupabase(order);
+    renderDtlPhotos(order);
+    renderOrders();
+    showToast('Foto eliminada.');
   }
 }
 
