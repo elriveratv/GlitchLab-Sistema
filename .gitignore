@@ -1,8 +1,0 @@
-# Archivos del sistema operativo
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Respaldos y temporales
-*.tmp
-*.log
