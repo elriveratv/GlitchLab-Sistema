@@ -1,0 +1,436 @@
+/* Estilos personalizados para GlitchLab Sistema de Órdenes */
+:root {
+  --glitch-cyan: #0ea5e9;
+  --glitch-primary: #12a1e2;
+  --glitch-neon: #00ffff;
+  --glitch-dark: #0a0f1d;
+  --glitch-secondary: #0f172a;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0f1d;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Signature Pad Canvas */
+#signatureCanvas {
+  touch-action: none;
+  cursor: crosshair;
+  background-color: #ffffff;
+}
+
+/* Pulso Electrocardiograma Debajo del Logo (Exacto al estilo de glitchlab.mx) */
+.logo-ecg-container {
+  width: 100%;
+  max-width: 100%;
+  height: 16px;
+  margin: -1px 0 0 0;
+  overflow: visible;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+.logo-ecg-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.logo-ecg-pulse {
+  stroke-dasharray: 40 1000;
+  stroke-dashoffset: 40;
+  opacity: 0;
+  animation: logo-ecg-beat 5s linear infinite;
+  filter: drop-shadow(0 0 3px #00ffff) drop-shadow(0 0 7px #0ea5e9);
+}
+
+@keyframes logo-ecg-beat {
+  0% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+  1% {
+    stroke-dashoffset: 40;
+    opacity: 1;
+  }
+  20% {
+    stroke-dashoffset: -230;
+    opacity: 1;
+  }
+  21% {
+    stroke-dashoffset: -230;
+    opacity: 0;
+  }
+  22% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+}
+
+.logo-ecg-spark {
+  opacity: 0;
+  transform-origin: 104px 1.5px;
+  animation: logo-ecg-spark-flash 5s linear infinite;
+}
+
+@keyframes logo-ecg-spark-flash {
+  0%, 8.5% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  10.5% {
+    opacity: 1;
+    transform: scale(1.6);
+    filter: drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 8px #00ffff) drop-shadow(0 0 12px #ec4899);
+  }
+  13% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+/* Timeline / Bitácora Styles */
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -21px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+}
+
+/* Shake Animation for Invalid Login */
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.animate-shake {
+  animation: shakeError 0.4s ease-in-out;
+}
+
+/* Visor Lightbox */
+#imageLightbox {
+  backdrop-filter: blur(8px);
+}
+
+/* Estilos de Impresión Optimizados para Impresora Térmica Aiyin AE-240BT & Formatos */
+@media print {
+  @page {
+    margin: 6mm !important;
+    size: auto;
+  }
+
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  body:not(.quickdoc-printing):not(.work-summary-printing) #print-area, 
+  body:not(.quickdoc-printing):not(.work-summary-printing) #print-area * {
+    visibility: visible !important;
+  }
+
+  body.quickdoc-printing #quickDocPrintContainer, 
+  body.quickdoc-printing #quickDocPrintContainer * {
+    visibility: visible !important;
+  }
+
+  body.work-summary-printing #workSummaryPrintContainer, 
+  body.work-summary-printing #workSummaryPrintContainer * {
+    visibility: visible !important;
+  }
+
+  #printModal,
+  #orderDetailModal,
+  #orderModal {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #printModal > div,
+  #printModal .overflow-y-auto {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #print-area, #quickDocPrintContainer, #workSummaryPrintContainer {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .no-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .no-print,
+  .no-print *,
+  #pdfCompilingOverlay,
+  #pdfRenderContainer,
+  #tempPdfRenderContainer {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Vista previa en pantalla del Sticker / Etiqueta Aiyin */
+body.ticket-sticker-mode #print-area {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+body.ticket-sticker-mode .aiyin-sticker-box {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Modo Ticket Térmico 80mm */
+body.ticket-thermal-mode #print-area {
+  width: 78mm !important;
+  max-width: 78mm !important;
+  margin: 0 auto !important;
+  padding: 2mm !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+/* Medidas para Sticker (Pantalla y Previsualización) */
+body.ticket-sticker-mode.sticker-size-51x25 #print-area .aiyin-sticker-box,
+body.ticket-sticker-mode:not(.sticker-size-50x30):not(.sticker-size-60x40):not(.sticker-size-76x50):not(.sticker-size-100x150) #print-area .aiyin-sticker-box {
+  width: 49mm !important;
+  max-width: 49mm !important;
+}
+
+body.ticket-sticker-mode.sticker-size-50x30 #print-area .aiyin-sticker-box {
+  width: 48mm !important;
+  max-width: 48mm !important;
+}
+
+body.ticket-sticker-mode.sticker-size-60x40 #print-area .aiyin-sticker-box {
+  width: 58mm !important;
+  max-width: 58mm !important;
+}
+
+body.ticket-sticker-mode.sticker-size-76x50 #print-area .aiyin-sticker-box {
+  width: 74mm !important;
+  max-width: 74mm !important;
+}
+
+body.ticket-sticker-mode.sticker-size-100x150 #print-area .aiyin-sticker-box {
+  width: 98mm !important;
+  max-width: 98mm !important;
+}
+
+/* Supabase Cloud Pulse Indicators */
+@keyframes sb-pulse-green {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.6;
+  }
+}
+
+.sb-pulse-active {
+  animation: sb-pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ========================================== */
+/* OPTIMIZACIONES PARA CELULAR Y TABLET       */
+/* ========================================== */
+
+/* Evitar scroll horizontal involuntario en la página sin romper position: sticky */
+html, body {
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Barra Superior Siempre Fija (Sticky Header en scroll con soporte Safe Area) */
+header {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 40 !important;
+  padding-top: max(0px, env(safe-area-inset-top));
+}
+
+/* Optimizaciones para Tablets (768px a 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  #ordersContainer {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.875rem !important;
+  }
+}
+
+/* Ocultar barra de scroll en contenedores horizontales pero permitir deslizamiento táctil */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* En celulares, tamaño de fuente mínimo 16px para evitar que iOS Safari haga zoom automático al tocar inputs */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="datetime-local"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Modales a pantalla completa o casi completa en celular */
+  .mobile-modal-full {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+/* Soporte para barra inferior con Safe Area en iPhone con notch o barra de inicio */
+#mobileBottomNav {
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+/* Evitar scroll mientras se firma con dedo o stylus en celular y tablet */
+#signatureCanvas {
+  touch-action: none;
+}
+
+/* Botones táctiles responsivos con micro-interacción al presionar */
+button:active, a:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
+/* ========================================== */
+/* TARJETAS DE ÓRDENES - HOVER AZUL SIN PARPADEO */
+/* ========================================== */
+.order-card {
+  background-color: #0b101d;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #1e293b;
+  box-sizing: border-box;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.order-card:hover {
+  background-color: #0f1c38 !important;
+  border-color: #0ea5e9 !important;
+  box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.25) !important;
+}
+
+.order-card:active {
+  background-color: #0d1830 !important;
+}
+
+/* Órdenes Entregadas: Recuadro más oscuro y sutilmente atenuado para no confundirse con las activas */
+.order-card.order-card-delivered {
+  background-color: #040711 !important;
+  border-color: #111827 !important;
+  opacity: 0.72;
+}
+
+.order-card.order-card-delivered:hover {
+  background-color: #080f1e !important;
+  border-color: #10b981 !important;
+  opacity: 1 !important;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.2) !important;
+}
+
+.order-card.order-card-delivered:active {
+  background-color: #060b17 !important;
+}
+
+
+
+
