@@ -1,0 +1,25 @@
+{
+  "name": "GlitchLab OS | Laboratorio Microelectrónica",
+  "short_name": "GlitchLab",
+  "description": "Sistema de Gestión y Taller de Microelectrónica GlitchLab",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#070c18",
+  "theme_color": "#0a0f1d",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo_oficial.png",
+      "sizes": "1024x169",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
